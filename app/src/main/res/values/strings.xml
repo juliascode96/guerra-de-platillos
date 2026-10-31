@@ -1,0 +1,91 @@
+<resources>
+    <string name="app_name">Guerra de Platillos</string>
+
+    <!-- Pantalla principal (Portada) -->
+    <string name="home_title_part1">Guerra de </string>
+    <string name="home_title_part2">Platillos</string>
+    <string name="home_subtitle">Tu guía contra los ultraprocesados</string>
+    <string name="home_badge">COME MEJOR, VIVE MEJOR</string>
+    <string name="desc_logo">Imagen principal Guerra de Platillos</string>
+
+    <!-- Menú principal -->
+    <string name="main_menu_title">MENÚ PRINCIPAL</string>
+    <string name="main_menu_subtitle">Elegí una opción para continuar</string>
+    <string name="main_menu_play">¡Jugar!</string>
+    <string name="main_menu_ranking">Ranking</string>
+    <string name="main_menu_profile">Mi Perfil</string>
+
+    <!-- Juego (placeholder) -->
+    <string name="game_title">JUEGO</string>
+    <string name="game_placeholder">Acá va a vivir Guerra de Platillos.\n¡Empezá a construir el juego desde GameScreen.kt!</string>
+    <string name="game_btn_finish_demo">Terminar partida (Demo)</string>
+
+    <!-- Fin de juego (placeholder) -->
+    <string name="game_over_title">FIN DE JUEGO</string>
+    <string name="game_over_placeholder">Acá se mostrarán los resultados de la partida.</string>
+    <string name="game_over_play_again">Volver a jugar</string>
+    <string name="game_over_back_menu">Volver al menú</string>
+
+    <!-- Ranking (placeholder) -->
+    <string name="ranking_title">RANKING</string>
+    <string name="ranking_placeholder">Acá se mostrará la tabla de posiciones.</string>
+
+    <!-- Descripciones de botones -->
+    <string name="btn_back_description">Volver a la pantalla anterior</string>
+    <string name="btn_close_description">Cerrar</string>
+    <string name="btn_settings_description">Configuración</string>
+
+    <!-- Configuración -->
+    <string name="settings_title">CONFIGURACIÓN</string>
+    <string name="settings_my_profile">Mi Perfil</string>
+    <string name="settings_profile_description">Ver detalle del usuario</string>
+    <string name="settings_header_sound">SONIDO</string>
+    <string name="settings_sound_effects">EFECTOS DE SONIDO</string>
+    <string name="settings_header_colors">PALETA DE COLORES (ACCESIBILIDAD)</string>
+    <string name="settings_protanopia">PROTANOPIA / DEUTERANOPIA</string>
+    <string name="settings_tritanopia">TRITANOPIA</string>
+
+    <!-- Perfil de usuario -->
+    <string name="profile_title">MI PERFIL</string>
+    <string name="desc_avatar_usuario">Avatar del usuario</string>
+    <string name="profile_no_user">Sin usuario registrado</string>
+    <string name="profile_no_user_info">-- años · --</string>
+    <string name="profile_user_info">%1$d años · %2$s</string>
+    <string name="profile_experience">Experiencia</string>
+    <string name="profile_xp_placeholder">--- / ---- XP</string>
+    <string name="profile_badge_1">🥦 Sin azúcar</string>
+    <string name="profile_badge_2">🔍 Lector de etiquetas</string>
+    <string name="profile_badge_3">🔥 - días activo</string>
+    <string name="profile_stat_1">días sin ultraprocesados</string>
+    <string name="profile_stat_2">productos editados</string>
+    <string name="profile_stat_3">objetivos listos</string>
+    <string name="profile_tab_summary">Resumen</string>
+    <string name="profile_tab_log">Registro</string>
+    <string name="profile_tab_achievements">Logros</string>
+    <string name="profile_week_header">DÍAS SIN ULTRAPROCESADOS · ESTA SEMANA</string>
+    <string name="profile_fact_title">¿SABÍAS QUE...?</string>
+    <string name="profile_fact_body">Un refresco de lata tiene hasta 20g de azúcar: casi el doble de lo recomendado para tu edad en un día entero.</string>
+    <string name="profile_alert_title">ALERTA DE AZÚCAR</string>
+    <string name="profile_alert_body">Ayer consumiste 40g de azúcar añadida. La OMS recomienda menos de 25g diarios para adolescentes.</string>
+    <string name="btn_editar_datos">Editar datos</string>
+
+    <!-- Creación / Edición de perfil -->
+    <string name="edit_title_create">Creá tu avatar</string>
+    <string name="edit_title_edit">Editá tu perfil</string>
+    <string name="edit_subtitle">Tu camino hacia hábitos más verdes empieza con vos.</string>
+    <string name="desc_avatar_seleccionado">Avatar seleccionado</string>
+    <string name="label_nombre_avatar">Nombre del avatar</string>
+    <string name="hint_nombre_avatar">Ej. Mateo</string>
+    <string name="desc_nombre_avatar">Así aparecerás en tu perfil y en los juegos.</string>
+    <string name="label_edad_usuario">Edad</string>
+    <string name="hint_edad_avatar">Ej. 25</string>
+    <string name="label_genero_usuario">Género</string>
+    <string name="option_hombre">👦  Hombre</string>
+    <string name="option_mujer">👧  Mujer</string>
+    <string name="footer_cambiar_avatar">Podés cambiar tu avatar más adelante.</string>
+    <string name="btn_continuar">Continuar  →</string>
+    <string name="btn_guardar_cambios">Guardar cambios</string>
+    <string name="error_datos_avatar">Ingresá tu nombre y una edad válida (1 a 120)</string>
+    <string name="msg_datos_actualizados">Datos actualizados correctamente</string>
+    <string name="msg_perfil_creado">¡Perfil creado con éxito!</string>
+</resources>

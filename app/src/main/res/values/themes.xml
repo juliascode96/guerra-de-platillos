@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Tema XML mínimo: solo define el fondo de la ventana para evitar el
+        "flash" blanco al abrir la app. Todos los estilos reales (colores,
+        tipografía, botones) viven en Compose: ui/theme/*.kt
+    -->
+    <style name="Theme.GuerraDePlatillos" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/color_background</item>
+        <item name="android:colorBackground">@color/color_background</item>
+    </style>
+</resources>

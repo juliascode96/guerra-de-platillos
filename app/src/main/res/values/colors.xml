@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        La paleta completa (normal, protanopia y tritanopia) está definida en
+        Compose: ui/theme/Color.kt. Acá solo quedan los colores que necesita
+        el tema XML de la ventana.
+    -->
+    <color name="color_background">#FF172929</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>
