@@ -9,9 +9,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.daa.guerradeplatillos.GuerraDePlatillosApp
+import com.daa.guerradeplatillos.ui.screens.auth.AuthScreen
 import com.daa.guerradeplatillos.ui.screens.game.GameOverScreen
 import com.daa.guerradeplatillos.ui.screens.game.GameScreen
-import com.daa.guerradeplatillos.ui.screens.game.InicioGuerraPlatillosScreen // <--- Importación de la pantalla de inicio de Guerra de Platillos
+import com.daa.guerradeplatillos.ui.screens.game.InicioGuerraPlatillosScreen
 import com.daa.guerradeplatillos.ui.screens.game.InicioLunchTimeScreen
 import com.daa.guerradeplatillos.ui.screens.game.LunchTimeScreen
 import com.daa.guerradeplatillos.ui.screens.game.OpcionLunchTimeScreen
@@ -26,6 +27,7 @@ import com.daa.guerradeplatillos.util.SoundManager
 /** Rutas de navegación de la app. */
 object Routes {
     const val HOME = "home"
+    const val AUTH = "auth"
     const val CREATE_USER = "create_user"
     const val MAIN_MENU = "main_menu"
 
@@ -49,6 +51,7 @@ object Routes {
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
     val app = LocalContext.current.applicationContext as GuerraDePlatillosApp
     val avatar by app.userRepository.avatar.collectAsStateWithLifecycle()
+    val currentUserUid by app.authRepository.currentUserUid.collectAsStateWithLifecycle()
 
     NavHost(navController = navController, startDestination = Routes.HOME) {
 
@@ -56,17 +59,42 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         composable(Routes.HOME) {
             HomeScreen(
                 onPlayClick = {
-                    if (avatar == null) {
-                        navController.navigateSingleTop(Routes.CREATE_USER)
-                    } else {
-                        navController.navigateSingleTop(Routes.MAIN_MENU)
+                    when {
+                        currentUserUid == null -> {
+                            navController.navigateSingleTop(Routes.AUTH)
+                        }
+                        avatar == null -> {
+                            navController.navigateSingleTop(Routes.CREATE_USER)
+                        }
+                        else -> {
+                            navController.navigateSingleTop(Routes.MAIN_MENU)
+                        }
                     }
                 },
                 onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
             )
         }
 
-        // 2. Creación de nuevo usuario
+        // 1b. Pantalla de Login / Registro (Firebase Auth + Firestore)
+        composable(Routes.AUTH) {
+            AuthScreen(
+                onAuthSuccess = {
+                    val destino = if (app.userRepository.avatar.value == null) {
+                        Routes.CREATE_USER
+                    } else {
+                        Routes.MAIN_MENU
+                    }
+                    navController.navigate(destino) {
+                        popUpTo(Routes.AUTH) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        // 2. Creación de nuevo usuario / avatar
         composable(Routes.CREATE_USER) {
             EditProfileScreen(
                 isEditMode = false,
@@ -95,7 +123,14 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onProfileClick = { navController.navigateSingleTop(Routes.PROFILE) },
                 onRankingClick = { navController.navigateSingleTop(Routes.RANKING) },
                 onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onLogoutClick = {
+                    app.authRepository.cerrarSesion()
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
             )
         }
 
@@ -192,6 +227,12 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             SettingsScreen(
                 onClose = { navController.popBackStack() },
                 onProfileClick = { navController.navigateSingleTop(Routes.PROFILE) },
+                onLogoutSuccess = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.HOME) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
             )
         }
 

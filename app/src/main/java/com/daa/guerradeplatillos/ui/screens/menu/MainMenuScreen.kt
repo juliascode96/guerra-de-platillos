@@ -39,7 +39,7 @@ import com.daa.guerradeplatillos.ui.theme.AppTheme
 import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
 
 /**
- * Pantalla de Menú Principal con los dos minijuegos, Perfil y Ranking.
+ * Pantalla de Menú Principal con los dos minijuegos, Perfil, Ranking y Cerrar sesión.
  */
 @Composable
 fun MainMenuScreen(
@@ -49,6 +49,7 @@ fun MainMenuScreen(
     onRankingClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onBack: () -> Unit,
+    onLogoutClick: () -> Unit = {},
 ) {
     val colors = AppTheme.colors
 
@@ -128,7 +129,7 @@ fun MainMenuScreen(
 
                 Spacer(Modifier.height(8.dp))
 
-                // Botones inferiores de Perfil y Ranking
+                // Botones inferiores de Perfil, Ranking y Cerrar sesión
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -138,7 +139,7 @@ fun MainMenuScreen(
                         onClick = onProfileClick,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .height(46.dp)
                     )
 
                     SecondaryButton(
@@ -146,7 +147,15 @@ fun MainMenuScreen(
                         onClick = onRankingClick,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .height(46.dp)
+                    )
+
+                    SecondaryButton(
+                        text = "Cerrar sesión",
+                        onClick = onLogoutClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
                     )
                 }
             }
@@ -167,7 +176,7 @@ fun GameCardItem(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(130.dp) // Altura ampliada para que no se corte nada
+            .height(130.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(cardBg)
             .border(1.dp, accentGreen, RoundedCornerShape(16.dp))

@@ -8,14 +8,18 @@ import kotlinx.coroutines.flow.StateFlow
 
 /**
  * ViewModel del usuario/avatar:
- * - Expone el perfil guardado
- * - Valida (nombre y rango de edad) y persiste los cambios
+ * - Expone el perfil guardado localmente y el apodo sincronizado con Firestore
+ * - Valida (nombre/apodo y rango de edad), persiste los cambios en SharedPreferences
+ *   y sobrescribe el apodo en Firestore.
  */
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repo = (application as GuerraDePlatillosApp).userRepository
+    private val app = application as GuerraDePlatillosApp
+    private val userRepo = app.userRepository
+    private val authRepo = app.authRepository
 
-    val avatar: StateFlow<Avatar?> = repo.avatar
+    val avatar: StateFlow<Avatar?> = userRepo.avatar
+    val apodoRemoto: StateFlow<String> = userRepo.apodoRemoto
 
     /** @return `true` si los datos eran válidos y se guardaron. */
     fun guardarPerfil(nombre: String, edadTexto: String, esMasculino: Boolean): Boolean {
@@ -24,7 +28,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         if (nombreTrim.isEmpty() || edad == null || edad !in 1..120) return false
 
         val sexo = if (esMasculino) Avatar.SEXO_MASCULINO else Avatar.SEXO_FEMENINO
-        repo.guardarAvatar(Avatar(nombreTrim, sexo, edad))
+        userRepo.guardarAvatar(Avatar(nombreTrim, sexo, edad))
+        authRepo.actualizarApodoEnFirestore(nombreTrim)
         return true
     }
 }

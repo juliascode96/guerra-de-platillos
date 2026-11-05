@@ -9,7 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Datos del usuario/avatar persistidos en SharedPreferences
- * (equivalente al UserPreferences de Código Verde).
+ * (equivalente al UserPreferences de Código Verde), con soporte
+ * para sincronizar el apodo (nombre) con Firestore.
  */
 class UserRepository(context: Context) {
 
@@ -18,18 +19,62 @@ class UserRepository(context: Context) {
     private val _avatar = MutableStateFlow(leerAvatar())
     val avatar: StateFlow<Avatar?> = _avatar.asStateFlow()
 
+    private val _apodoRemoto = MutableStateFlow(prefs.getString(KEY_APODO_REMOTO, "") ?: "")
+    /** Apodo traído de Firestore (para precargar al crear el avatar). */
+    val apodoRemoto: StateFlow<String> = _apodoRemoto.asStateFlow()
+
     fun guardarAvatar(avatar: Avatar) {
         prefs.edit {
             putString(KEY_NOMBRE, avatar.nombre)
+            putString(KEY_APODO_REMOTO, avatar.nombre)
             putInt(KEY_EDAD, avatar.edad)
             putString(KEY_SEXO, avatar.sexo)
             putBoolean(KEY_HAS_AVATAR, true)
         }
+        _apodoRemoto.value = avatar.nombre
         _avatar.value = avatar
+    }
+
+    /**
+     * Se invoca al registrarse, iniciar sesión o sincronizar con Firestore.
+     * - Si entra un UID distinto al anterior en este teléfono, limpia el avatar anterior
+     *   para que el nuevo usuario complete su edad y género con su apodo precargado.
+     * - Si ya tenía avatar en este teléfono, sincroniza su nombre con el apodo de Firestore.
+     */
+    fun sincronizarConFirestore(uid: String, apodoFirestore: String) {
+        val lastUid = prefs.getString(KEY_UID, null)
+        val apodoLimpio = apodoFirestore.trim()
+
+        if (lastUid != null && lastUid != uid) {
+            // Cambió de cuenta en el mismo dispositivo: reiniciamos el avatar local
+            prefs.edit {
+                clear()
+                putString(KEY_UID, uid)
+                putString(KEY_APODO_REMOTO, apodoLimpio)
+            }
+            _apodoRemoto.value = apodoLimpio
+            _avatar.value = null
+            return
+        }
+
+        prefs.edit {
+            putString(KEY_UID, uid)
+            if (apodoLimpio.isNotEmpty()) {
+                putString(KEY_APODO_REMOTO, apodoLimpio)
+                if (prefs.getBoolean(KEY_HAS_AVATAR, false)) {
+                    putString(KEY_NOMBRE, apodoLimpio)
+                }
+            }
+        }
+        if (apodoLimpio.isNotEmpty()) {
+            _apodoRemoto.value = apodoLimpio
+        }
+        _avatar.value = leerAvatar()
     }
 
     fun borrarAvatar() {
         prefs.edit { clear() }
+        _apodoRemoto.value = ""
         _avatar.value = null
     }
 
@@ -48,6 +93,8 @@ class UserRepository(context: Context) {
 
     private companion object {
         const val PREFS_NAME = "GuerraDePlatillosUserPrefs"
+        const val KEY_UID = "user_uid"
+        const val KEY_APODO_REMOTO = "user_apodo_remoto"
         const val KEY_NOMBRE = "user_nombre"
         const val KEY_EDAD = "user_edad"
         const val KEY_SEXO = "user_sexo"
