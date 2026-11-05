@@ -63,20 +63,26 @@ fun EditProfileScreen(
     val colors = AppTheme.colors
     val context = LocalContext.current
     val avatar by viewModel.avatar.collectAsStateWithLifecycle()
+    val apodoRemoto by viewModel.apodoRemoto.collectAsStateWithLifecycle()
 
     var nombre by rememberSaveable { mutableStateOf("") }
     var edad by rememberSaveable { mutableStateOf("") }
     var esMasculino by rememberSaveable { mutableStateOf(true) }
     var precargado by rememberSaveable { mutableStateOf(false) }
 
-    // Precarga de los datos guardados (una sola vez)
-    LaunchedEffect(avatar) {
+    // Precarga de los datos guardados o del apodo traído de Firestore (una sola vez)
+    LaunchedEffect(avatar, apodoRemoto) {
         val a = avatar
-        if (!precargado && a != null) {
-            nombre = a.nombre
-            if (a.edad > 0) edad = a.edad.toString()
-            esMasculino = a.sexo != Avatar.SEXO_FEMENINO
-            precargado = true
+        if (!precargado) {
+            if (a != null) {
+                nombre = a.nombre
+                if (a.edad > 0) edad = a.edad.toString()
+                esMasculino = a.sexo != Avatar.SEXO_FEMENINO
+                precargado = true
+            } else if (apodoRemoto.isNotBlank()) {
+                nombre = apodoRemoto
+                precargado = true
+            }
         }
     }
 

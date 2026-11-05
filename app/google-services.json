@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "774197632146",
+    "project_id": "guerra-de-platillos",
+    "storage_bucket": "guerra-de-platillos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:774197632146:android:d238f37c5682ee17ea5a4b",
+        "android_client_info": {
+          "package_name": "com.daa.guerradeplatillos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNLOlo1IExmAO9tkdiU-rBIzmtGsCVwqc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

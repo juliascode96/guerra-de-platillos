@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -382,6 +383,7 @@ fun AppTextField(
     placeholder: String,
     modifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     val colors = AppTheme.colors
     val shape = RoundedCornerShape(Dimens.CardCornerRadius)
@@ -391,6 +393,7 @@ fun AppTextField(
         placeholder = { Text(placeholder, fontSize = 14.sp) },
         singleLine = true,
         keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
         textStyle = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
         shape = shape,
         colors = TextFieldDefaults.colors(
