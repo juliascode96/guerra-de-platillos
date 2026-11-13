@@ -1,5 +1,6 @@
 package com.daa.guerradeplatillos.ui.screens.game
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +20,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -123,11 +126,11 @@ private fun InicioGuerraPlatillosContent(
                             .background(colors.cardUnselectedBg),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "[ Ilustración de Cartas / Duelo ]",
-                            color = colors.textSecondary,
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center
+                        Image(
+                            painter = painterResource(id = R.drawable.img_guerra_de_platillos_cover),
+                            contentDescription = "Guerra de Platillos",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
 

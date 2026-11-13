@@ -1,5 +1,7 @@
 package com.daa.guerradeplatillos.ui.screens.menu
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -116,6 +120,7 @@ fun MainMenuScreen(
                         title = "GUERRA DE PLATILLOS",
                         description = "Desafío Máximo",
                         buttonText = "¡JUGAR! ▷",
+                        coverRes = R.drawable.img_guerra_de_platillos_cover,
                         onPlayClick = onPlayGame2Click
                     )
                 }
@@ -153,6 +158,7 @@ fun GameCardItem(
     title: String,
     description: String,
     buttonText: String,
+    @DrawableRes coverRes: Int? = null,
     onPlayClick: () -> Unit
 ) {
     val cardBg = AppTheme.colors.cardBg
@@ -177,7 +183,16 @@ fun GameCardItem(
                     .size(85.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(AppTheme.colors.cardUnselectedBg)
-            )
+            ) {
+                if (coverRes != null) {
+                    Image(
+                        painter = painterResource(id = coverRes),
+                        contentDescription = title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
 
