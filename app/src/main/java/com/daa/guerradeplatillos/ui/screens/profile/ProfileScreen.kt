@@ -1,5 +1,6 @@
 package com.daa.guerradeplatillos.ui.screens.profile
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.daa.guerradeplatillos.R
 import com.daa.guerradeplatillos.model.Avatar
+import com.daa.guerradeplatillos.model.AvatarCatalog
 import com.daa.guerradeplatillos.ui.components.BorderCard
 import com.daa.guerradeplatillos.ui.components.CircleIconButton
 import com.daa.guerradeplatillos.ui.components.PrimaryButton
@@ -109,20 +112,32 @@ private fun ProfileContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box {
-                    // TODO: reemplazar por la imagen elegida (ver AvatarCatalog) cuando se implemente.
-                    Box(
-                        modifier = Modifier
-                            .size(90.dp)
-                            .clip(CircleShape)
-                            .background(colors.goldXp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_person),
+                    val avatarImg = avatar?.let { AvatarCatalog.byId(it.avatarId) }
+                    if (avatarImg != null) {
+                        Image(
+                            painter = painterResource(avatarImg.drawable),
                             contentDescription = stringResource(R.string.desc_avatar_usuario),
-                            tint = colors.background,
-                            modifier = Modifier.size(56.dp)
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(90.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, colors.success, CircleShape)
                         )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(90.dp)
+                                .clip(CircleShape)
+                                .background(colors.goldXp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_person),
+                                contentDescription = stringResource(R.string.desc_avatar_usuario),
+                                tint = colors.background,
+                                modifier = Modifier.size(56.dp)
+                            )
+                        }
                     }
                     // Badge verificado
                     Box(

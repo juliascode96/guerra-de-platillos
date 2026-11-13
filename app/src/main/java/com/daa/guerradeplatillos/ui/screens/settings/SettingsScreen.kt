@@ -1,6 +1,8 @@
 package com.daa.guerradeplatillos.ui.screens.settings
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -22,7 +26,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.daa.guerradeplatillos.R
+import com.daa.guerradeplatillos.model.AvatarCatalog
 import com.daa.guerradeplatillos.ui.components.AppCard
 import com.daa.guerradeplatillos.ui.components.AppDivider
 import com.daa.guerradeplatillos.ui.components.CircleIconButton
@@ -66,6 +74,7 @@ fun SettingsScreen(
         soundEnabled = soundEnabled,
         isLoggedIn = currentUserUid != null,
         userDisplayName = nombreActual,
+        avatarDrawableRes = avatar?.let { AvatarCatalog.byId(it.avatarId)?.drawable },
         onClose = onClose,
         onProfileClick = onProfileClick,
         onSoundChange = viewModel::setSoundEnabled,
@@ -86,6 +95,7 @@ private fun SettingsContent(
     soundEnabled: Boolean,
     isLoggedIn: Boolean,
     userDisplayName: String?,
+    avatarDrawableRes: Int? = null,
     onClose: () -> Unit,
     onProfileClick: () -> Unit,
     onSoundChange: (Boolean) -> Unit,
@@ -125,13 +135,29 @@ private fun SettingsContent(
                     .padding(top = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                CircleIconButton(
-                    icon = R.drawable.ic_person,
-                    contentDescription = stringResource(R.string.settings_profile_description),
-                    onClick = onProfileClick,
-                    size = 80.dp,
-                    tint = colors.success,
-                )
+                if (avatarDrawableRes != null) {
+                    Image(
+                        painter = painterResource(avatarDrawableRes),
+                        contentDescription = stringResource(R.string.settings_profile_description),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, colors.success, CircleShape)
+                            .clickable {
+                                SoundManager.playBubbly()
+                                onProfileClick()
+                            }
+                    )
+                } else {
+                    CircleIconButton(
+                        icon = R.drawable.ic_person,
+                        contentDescription = stringResource(R.string.settings_profile_description),
+                        onClick = onProfileClick,
+                        size = 80.dp,
+                        tint = colors.success,
+                    )
+                }
                 Text(
                     text = userDisplayName ?: stringResource(R.string.settings_my_profile),
                     color = colors.textPrimary,

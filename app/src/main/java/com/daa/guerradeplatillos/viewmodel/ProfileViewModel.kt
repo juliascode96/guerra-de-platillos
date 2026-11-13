@@ -22,13 +22,18 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     val apodoRemoto: StateFlow<String> = userRepo.apodoRemoto
 
     /** @return `true` si los datos eran válidos y se guardaron. */
-    fun guardarPerfil(nombre: String, edadTexto: String, esMasculino: Boolean): Boolean {
+    fun guardarPerfil(
+        nombre: String,
+        edadTexto: String,
+        esMasculino: Boolean,
+        avatarId: Int = Avatar.DEFAULT_AVATAR_ID,
+    ): Boolean {
         val nombreTrim = nombre.trim()
         val edad = edadTexto.trim().toIntOrNull()
         if (nombreTrim.isEmpty() || edad == null || edad !in 1..120) return false
 
         val sexo = if (esMasculino) Avatar.SEXO_MASCULINO else Avatar.SEXO_FEMENINO
-        userRepo.guardarAvatar(Avatar(nombreTrim, sexo, edad))
+        userRepo.guardarAvatar(Avatar(nombreTrim, sexo, edad, avatarId))
         authRepo.actualizarApodoEnFirestore(nombreTrim)
         return true
     }

@@ -33,6 +33,7 @@ class UserRepository(context: Context) {
             putString(KEY_APODO_REMOTO, avatar.nombre)
             putInt(KEY_EDAD, avatar.edad)
             putString(KEY_SEXO, avatar.sexo)
+            putInt(KEY_AVATAR_ID, avatar.avatarId)
             putBoolean(KEY_HAS_AVATAR, true)
         }
         _apodoRemoto.value = avatar.nombre
@@ -102,6 +103,7 @@ class UserRepository(context: Context) {
             nombre = prefs.getString(KEY_NOMBRE, "") ?: "",
             sexo = sexo,
             edad = prefs.getInt(KEY_EDAD, 0),
+            avatarId = prefs.getInt(KEY_AVATAR_ID, Avatar.DEFAULT_AVATAR_ID),
         )
     }
 
@@ -113,6 +115,7 @@ class UserRepository(context: Context) {
         const val KEY_NOMBRE = "user_nombre"
         const val KEY_EDAD = "user_edad"
         const val KEY_SEXO = "user_sexo"
+        const val KEY_AVATAR_ID = "user_avatar_id"
         const val KEY_HAS_AVATAR = "has_avatar"
     }
 }
