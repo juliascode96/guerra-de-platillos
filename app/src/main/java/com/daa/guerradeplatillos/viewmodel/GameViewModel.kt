@@ -54,8 +54,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun onPhoneShaken() {
-        viewModelScope.launch {
-            _uiEvent.send(GameUiEvent.ShowShakeToast)
+        if (isWaitingReveal) {
+            revealCurrentRound()
+        } else {
+            viewModelScope.launch {
+                _uiEvent.send(GameUiEvent.ShowShakeToast)
+            }
         }
     }
 
@@ -95,10 +99,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         private set
     var lastRoundResult by mutableStateOf<RoundResult?>(null)
         private set
+    var areCardsRevealed by mutableStateOf(false)
+        private set
 
     val totalRounds: Int = CARDS_PER_PLAYER
+    val isWaitingReveal: Boolean
+        get() = playerPlayedCard != null && !areCardsRevealed
     val isGameFinished: Boolean
-        get() = roundsPlayed >= totalRounds || playerHand.isEmpty()
+        get() = roundsPlayed >= totalRounds
 
     init {
         startNewGame()
@@ -116,10 +124,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         rivalScore = 0
         roundsPlayed = 0
         lastRoundResult = null
+        areCardsRevealed = false
     }
 
     fun selectCard(card: CardModel) {
-        if (isGameFinished) return
+        if (isGameFinished || isWaitingReveal) return
         selectedCard = card
     }
 
@@ -129,7 +138,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun playCard(chosen: CardModel) {
-        if (isGameFinished) return
+        if (isGameFinished || isWaitingReveal) return
         if (chosen !in playerHand) return
         val rivalChoice = rivalHand.randomOrNull() ?: return
 
@@ -138,16 +147,29 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         playerPlayedCard = chosen
         rivalPlayedCard = rivalChoice
         selectedCard = null
+        areCardsRevealed = false
+        lastRoundResult = null
+    }
+
+    /**
+     * Da vuelta ambas cartas jugadas (al girar/agitar el celular) y calcula
+     * el puntaje de la ronda.
+     */
+    fun revealCurrentRound() {
+        if (!isWaitingReveal) return
+        val playerCard = playerPlayedCard ?: return
+        val rivalCard = rivalPlayedCard ?: return
 
         val result = evaluateRound(
             roundNumber = roundsPlayed + 1,
-            playerCard = chosen,
-            rivalCard = rivalChoice,
+            playerCard = playerCard,
+            rivalCard = rivalCard,
         )
         playerScore += result.playerPointsGained
         rivalScore += result.rivalPointsGained
         roundsPlayed += 1
         lastRoundResult = result
+        areCardsRevealed = true
     }
 
     /**

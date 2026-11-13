@@ -190,7 +190,12 @@ fun GuerraPlatillosScreen(
                                 card = viewModel.rivalPlayedCard,
                                 width = 105.dp,
                                 height = 148.dp,
-                                onClick = { viewModel.rivalPlayedCard?.let { detailCard = it } }
+                                isFaceDown = viewModel.isWaitingReveal,
+                                onClick = {
+                                    if (!viewModel.isWaitingReveal) {
+                                        viewModel.rivalPlayedCard?.let { detailCard = it }
+                                    }
+                                }
                             )
                         }
 
@@ -203,25 +208,35 @@ fun GuerraPlatillosScreen(
                                 card = viewModel.playerPlayedCard,
                                 width = 105.dp,
                                 height = 148.dp,
-                                onClick = { viewModel.playerPlayedCard?.let { detailCard = it } }
+                                isFaceDown = viewModel.isWaitingReveal,
+                                onClick = {
+                                    if (!viewModel.isWaitingReveal) {
+                                        viewModel.playerPlayedCard?.let { detailCard = it }
+                                    }
+                                }
                             )
                         }
                     }
                 }
 
-                viewModel.lastRoundResult?.let { result ->
+                if (viewModel.isWaitingReveal) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    RoundResultBanner(result = result)
+                    RevealPromptBanner(onFallbackTap = { viewModel.revealCurrentRound() })
+                } else {
+                    viewModel.lastRoundResult?.let { result ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        RoundResultBanner(result = result)
+                    }
                 }
             }
 
             // 3. Mano del Jugador (sin botón de jugar: se arrastra hacia arriba para jugar, se toca para ver detalle)
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = if (viewModel.isGameFinished) {
-                        "● ¡Terminaron las 3 rondas!"
-                    } else {
-                        "● Arrastrá una carta hacia arriba para jugar · Tocá para ver detalle"
+                    text = when {
+                        viewModel.isGameFinished -> "● ¡Terminaron las 3 rondas!"
+                        viewModel.isWaitingReveal -> "● ¡Girá o agitá el celular para revelar esta ronda!"
+                        else -> "● Arrastrá una carta hacia arriba para jugar · Tocá para ver detalle"
                     },
                     color = colors.textPrimary,
                     fontSize = 12.sp,
@@ -245,6 +260,7 @@ fun GuerraPlatillosScreen(
                         viewModel.playerHand.forEach { card ->
                             DraggableHandCard(
                                 card = card,
+                                dragEnabled = !viewModel.isWaitingReveal,
                                 onTap = { detailCard = card },
                                 onPlay = { viewModel.playCard(card) }
                             )
@@ -267,6 +283,7 @@ fun GuerraPlatillosScreen(
 @Composable
 private fun DraggableHandCard(
     card: CardModel,
+    dragEnabled: Boolean,
     onTap: () -> Unit,
     onPlay: () -> Unit,
 ) {
@@ -277,7 +294,7 @@ private fun DraggableHandCard(
 
     val animOffsetX by animateFloatAsState(targetValue = rawOffsetX, label = "cardDragX")
     val animOffsetY by animateFloatAsState(targetValue = rawOffsetY, label = "cardDragY")
-    val readyToPlay = rawOffsetY <= dragThresholdPx
+    val readyToPlay = dragEnabled && rawOffsetY <= dragThresholdPx
 
     Box(
         modifier = Modifier
@@ -288,30 +305,36 @@ private fun DraggableHandCard(
                     (if (isDragging) rawOffsetY else animOffsetY).roundToInt(),
                 )
             }
-            .pointerInput(card.id) {
-                detectDragGestures(
-                    onDragStart = { isDragging = true },
-                    onDragEnd = {
-                        isDragging = false
-                        if (rawOffsetY <= dragThresholdPx) {
-                            onPlay()
-                        } else {
-                            rawOffsetX = 0f
-                            rawOffsetY = 0f
-                        }
-                    },
-                    onDragCancel = {
-                        isDragging = false
-                        rawOffsetX = 0f
-                        rawOffsetY = 0f
-                    },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        rawOffsetX += dragAmount.x
-                        rawOffsetY += dragAmount.y
+            .then(
+                if (dragEnabled) {
+                    Modifier.pointerInput(card.id) {
+                        detectDragGestures(
+                            onDragStart = { isDragging = true },
+                            onDragEnd = {
+                                isDragging = false
+                                if (rawOffsetY <= dragThresholdPx) {
+                                    onPlay()
+                                } else {
+                                    rawOffsetX = 0f
+                                    rawOffsetY = 0f
+                                }
+                            },
+                            onDragCancel = {
+                                isDragging = false
+                                rawOffsetX = 0f
+                                rawOffsetY = 0f
+                            },
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                rawOffsetX += dragAmount.x
+                                rawOffsetY += dragAmount.y
+                            }
+                        )
                     }
-                )
-            }
+                } else {
+                    Modifier
+                }
+            )
     ) {
         MiniCard(
             card = card,
@@ -319,6 +342,29 @@ private fun DraggableHandCard(
             height = 172.dp,
             isHighlighted = readyToPlay,
             onClick = onTap
+        )
+    }
+}
+
+@Composable
+private fun RevealPromptBanner(onFallbackTap: () -> Unit) {
+    val colors = AppTheme.colors
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(colors.cardBg)
+            .border(1.dp, colors.warning, RoundedCornerShape(10.dp))
+            .clickable { onFallbackTap() }
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "📱 ¡Girá o agitá el celular para revelar las cartas!",
+            color = colors.warning,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
         )
     }
 }
@@ -360,6 +406,7 @@ fun MiniCard(
     width: Dp = 105.dp,
     height: Dp = 160.dp,
     isHighlighted: Boolean = false,
+    isFaceDown: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     val colors = AppTheme.colors
@@ -377,6 +424,24 @@ fun MiniCard(
             contentAlignment = Alignment.Center
         ) {
             Text(text = "Vacío", color = colors.textSecondary, fontSize = 11.sp)
+        }
+        return
+    }
+
+    if (isFaceDown) {
+        Box(
+            modifier = Modifier
+                .width(width)
+                .height(height)
+                .clip(RoundedCornerShape(12.dp))
+                .border(1.dp, colors.warning, RoundedCornerShape(12.dp))
+        ) {
+            Image(
+                painter = painterResource(R.drawable.img_card_cover),
+                contentDescription = "Carta boca abajo",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
         }
         return
     }
