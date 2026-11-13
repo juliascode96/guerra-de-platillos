@@ -1,9 +1,10 @@
-﻿package com.daa.guerradeplatillos.ui.navigation
+package com.daa.guerradeplatillos.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -18,6 +19,7 @@ import com.daa.guerradeplatillos.ui.screens.game.InicioGuerraPlatillosScreen
 import com.daa.guerradeplatillos.ui.screens.game.InicioLunchTimeScreen
 import com.daa.guerradeplatillos.ui.screens.game.LunchTimeScreen
 import com.daa.guerradeplatillos.ui.screens.game.OpcionLunchTimeScreen
+import com.daa.guerradeplatillos.ui.screens.game.ResultadoLunchTimeScreen
 import com.daa.guerradeplatillos.ui.screens.home.HomeScreen
 import com.daa.guerradeplatillos.ui.screens.menu.MainMenuScreen
 import com.daa.guerradeplatillos.ui.screens.profile.EditProfileScreen
@@ -25,6 +27,7 @@ import com.daa.guerradeplatillos.ui.screens.profile.ProfileScreen
 import com.daa.guerradeplatillos.ui.screens.ranking.RankingScreen
 import com.daa.guerradeplatillos.ui.screens.settings.SettingsScreen
 import com.daa.guerradeplatillos.util.SoundManager
+import com.daa.guerradeplatillos.viewmodel.LunchTimeViewModel
 
 /** Rutas de navegaciÃ³n de la app. */
 object Routes {
@@ -37,6 +40,7 @@ object Routes {
     const val INICIO_LUNCH_TIME = "inicio_lunch_time"
     const val OPCION_LUNCH_TIME = "opcion_lunch_time"
     const val LUNCH_TIME_GAME = "lunch_time_game"
+    const val LUNCH_TIME_RESULT = "lunch_time_result"
 
     // Rutas de Guerra de Platillos
     const val INICIO_GUERRA_PLATILLOS = "inicio_guerra_platillos"
@@ -54,6 +58,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
     val app = LocalContext.current.applicationContext as GuerraDePlatillosApp
     val avatar by app.userRepository.avatar.collectAsStateWithLifecycle()
     val currentUserUid by app.authRepository.currentUserUid.collectAsStateWithLifecycle()
+    val lunchTimeViewModel: LunchTimeViewModel = viewModel()
 
     NavHost(navController = navController, startDestination = Routes.HOME) {
 
@@ -150,7 +155,8 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         // 5. Pantalla de Opciones de Lunch Time (AutomÃ¡tico / Yo Elijo)
         composable(Routes.OPCION_LUNCH_TIME) {
             OpcionLunchTimeScreen(
-                onConfirmClick = {
+                viewModel = lunchTimeViewModel,
+                onStartGame = {
                     SoundManager.playStartGame()
                     navController.navigateSingleTop(Routes.LUNCH_TIME_GAME)
                 },
@@ -161,18 +167,37 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         // 6. Pantalla interactiva del juego Lunch Time (SelecciÃ³n de alimentos)
         composable(Routes.LUNCH_TIME_GAME) {
             LunchTimeScreen(
-                onConfirmMenu = {
+                viewModel = lunchTimeViewModel,
+                onFinish = {
                     SoundManager.playGameFinish()
-                    navController.navigate(Routes.GAME_OVER) {
-                        popUpTo(Routes.MAIN_MENU) { inclusive = false }
+                    navController.navigate(Routes.LUNCH_TIME_RESULT) {
+                        popUpTo(Routes.LUNCH_TIME_GAME) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
-                onBack = { navController.popBackStack() }
+                onExit = { navController.popBackStack(Routes.MAIN_MENU, inclusive = false) }
             )
         }
 
-        // 7. Pantalla de inicio / presentaciÃ³n de Guerra de Platillos
+
+        // 6b. Pantalla de resultados de Lunch Time
+        composable(Routes.LUNCH_TIME_RESULT) {
+            ResultadoLunchTimeScreen(
+                viewModel = lunchTimeViewModel,
+                onPlayAgain = {
+                    SoundManager.playStartGame()
+                    navController.navigate(Routes.OPCION_LUNCH_TIME) {
+                        popUpTo(Routes.LUNCH_TIME_RESULT) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onBackToMenu = {
+                    navController.popBackStack(Routes.MAIN_MENU, inclusive = false)
+                },
+                onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
+            )
+        }
+
         composable(Routes.INICIO_GUERRA_PLATILLOS) {
             InicioGuerraPlatillosScreen(
                 onStartGameClick = {

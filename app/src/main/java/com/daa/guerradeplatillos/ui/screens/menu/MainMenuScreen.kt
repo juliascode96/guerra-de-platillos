@@ -113,6 +113,7 @@ fun MainMenuScreen(
                         title = "LUNCH TIME",
                         description = "Armá tu menú saludable.",
                         buttonText = "¡JUGAR! ▷",
+                        coverRes = R.drawable.portada,
                         onPlayClick = onPlayGame1Click
                     )
 
