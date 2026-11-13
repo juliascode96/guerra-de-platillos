@@ -1,9 +1,13 @@
 package com.daa.guerradeplatillos.ui.screens.game
 
 import android.widget.Toast
+import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,16 +27,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -46,6 +64,7 @@ import com.daa.guerradeplatillos.viewmodel.GameUiEvent
 import com.daa.guerradeplatillos.viewmodel.GameViewModel
 import com.daa.guerradeplatillos.viewmodel.RoundResult
 import com.daa.guerradeplatillos.viewmodel.RoundWinner
+import kotlin.math.roundToInt
 
 @Composable
 fun GuerraPlatillosScreen(
@@ -55,6 +74,7 @@ fun GuerraPlatillosScreen(
     viewModel: GameViewModel = viewModel()
 ) {
     val colors = AppTheme.colors
+    var detailCard by remember { mutableStateOf<CardModel?>(null) }
 
     // Sensores (shake): se activan al entrar a la pantalla y se pausan al salir
     val context = LocalContext.current
@@ -166,7 +186,12 @@ fun GuerraPlatillosScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(text = "RIVAL", color = colors.textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.height(4.dp))
-                            MiniCard(card = viewModel.rivalPlayedCard)
+                            MiniCard(
+                                card = viewModel.rivalPlayedCard,
+                                width = 105.dp,
+                                height = 148.dp,
+                                onClick = { viewModel.rivalPlayedCard?.let { detailCard = it } }
+                            )
                         }
 
                         Text(text = "VS", color = colors.success, fontSize = 22.sp, fontWeight = FontWeight.Black)
@@ -174,74 +199,127 @@ fun GuerraPlatillosScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(text = "VOS", color = colors.success, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.height(4.dp))
-                            MiniCard(card = viewModel.playerPlayedCard)
+                            MiniCard(
+                                card = viewModel.playerPlayedCard,
+                                width = 105.dp,
+                                height = 148.dp,
+                                onClick = { viewModel.playerPlayedCard?.let { detailCard = it } }
+                            )
                         }
                     }
                 }
 
                 viewModel.lastRoundResult?.let { result ->
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     RoundResultBanner(result = result)
                 }
             }
 
-            // 3. Mano del Jugador (3 cartas iniciales, se descartan al jugar)
+            // 3. Mano del Jugador (sin botón de jugar: se arrastra hacia arriba para jugar, se toca para ver detalle)
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = if (viewModel.isGameFinished) {
                         "● ¡Terminaron las 3 rondas!"
                     } else {
-                        "● ¡Te toca! Elegí una carta de tu mano"
+                        "● Arrastrá una carta hacia arriba para jugar · Tocá para ver detalle"
                     },
                     color = colors.textPrimary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    if (viewModel.playerHand.isEmpty()) {
-                        Text(
-                            text = "Sin cartas en mano",
-                            color = colors.textSecondary,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(vertical = 24.dp)
-                        )
-                    } else {
+                if (viewModel.isGameFinished) {
+                    PrimaryButton(
+                        text = "VER RESULTADO FINAL  →",
+                        onClick = { onFinishGame(viewModel.playerScore, viewModel.rivalScore) },
+                        shape = RoundedCornerShape(16.dp),
+                        minHeight = 52.dp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
                         viewModel.playerHand.forEach { card ->
-                            MiniCard(
+                            DraggableHandCard(
                                 card = card,
-                                isSelected = viewModel.selectedCard?.id == card.id,
-                                onClick = { viewModel.selectCard(card) }
+                                onTap = { detailCard = card },
+                                onPlay = { viewModel.playCard(card) }
                             )
                         }
                     }
                 }
             }
-
-            // 4. Botón de Acción
-            PrimaryButton(
-                text = when {
-                    viewModel.isGameFinished -> "VER RESULTADO FINAL  →"
-                    viewModel.selectedCard != null -> "JUGAR CARTA ⇧"
-                    else -> "SELECCIONÁ UNA CARTA"
-                },
-                enabled = viewModel.isGameFinished || viewModel.selectedCard != null,
-                onClick = {
-                    if (viewModel.isGameFinished) {
-                        onFinishGame(viewModel.playerScore, viewModel.rivalScore)
-                    } else {
-                        viewModel.playTurn()
-                    }
-                },
-                shape = RoundedCornerShape(16.dp),
-                minHeight = 50.dp,
-                modifier = Modifier.fillMaxWidth()
-            )
         }
+    }
+
+    // Modal de detalle al tocar cualquier carta
+    detailCard?.let { card ->
+        CardDetailDialog(
+            card = card,
+            onDismiss = { detailCard = null }
+        )
+    }
+}
+
+@Composable
+private fun DraggableHandCard(
+    card: CardModel,
+    onTap: () -> Unit,
+    onPlay: () -> Unit,
+) {
+    val dragThresholdPx = with(LocalDensity.current) { -72.dp.toPx() }
+    var rawOffsetX by remember(card.id) { mutableFloatStateOf(0f) }
+    var rawOffsetY by remember(card.id) { mutableFloatStateOf(0f) }
+    var isDragging by remember(card.id) { mutableStateOf(false) }
+
+    val animOffsetX by animateFloatAsState(targetValue = rawOffsetX, label = "cardDragX")
+    val animOffsetY by animateFloatAsState(targetValue = rawOffsetY, label = "cardDragY")
+    val readyToPlay = rawOffsetY <= dragThresholdPx
+
+    Box(
+        modifier = Modifier
+            .zIndex(if (isDragging) 10f else 0f)
+            .offset {
+                IntOffset(
+                    (if (isDragging) rawOffsetX else animOffsetX).roundToInt(),
+                    (if (isDragging) rawOffsetY else animOffsetY).roundToInt(),
+                )
+            }
+            .pointerInput(card.id) {
+                detectDragGestures(
+                    onDragStart = { isDragging = true },
+                    onDragEnd = {
+                        isDragging = false
+                        if (rawOffsetY <= dragThresholdPx) {
+                            onPlay()
+                        } else {
+                            rawOffsetX = 0f
+                            rawOffsetY = 0f
+                        }
+                    },
+                    onDragCancel = {
+                        isDragging = false
+                        rawOffsetX = 0f
+                        rawOffsetY = 0f
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        rawOffsetX += dragAmount.x
+                        rawOffsetY += dragAmount.y
+                    }
+                )
+            }
+    ) {
+        MiniCard(
+            card = card,
+            width = 108.dp,
+            height = 172.dp,
+            isHighlighted = readyToPlay,
+            onClick = onTap
+        )
     }
 }
 
@@ -279,7 +357,9 @@ private fun RoundResultBanner(result: RoundResult) {
 @Composable
 fun MiniCard(
     card: CardModel?,
-    isSelected: Boolean = false,
+    width: Dp = 105.dp,
+    height: Dp = 160.dp,
+    isHighlighted: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     val colors = AppTheme.colors
@@ -289,78 +369,178 @@ fun MiniCard(
     if (card == null) {
         Box(
             modifier = Modifier
-                .width(100.dp)
-                .height(145.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .width(width)
+                .height(height)
+                .clip(RoundedCornerShape(12.dp))
                 .background(colors.cardUnselectedBg)
-                .border(1.dp, colors.cardBorder, RoundedCornerShape(10.dp)),
+                .border(1.dp, colors.cardBorder, RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = "Vacío", color = colors.textSecondary, fontSize = 10.sp)
+            Text(text = "Vacío", color = colors.textSecondary, fontSize = 11.sp)
         }
         return
     }
 
     Card(
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = paperBg),
         modifier = Modifier
-            .width(100.dp)
-            .height(145.dp)
+            .width(width)
+            .height(height)
             .border(
-                width = if (isSelected) 3.dp else 1.dp,
-                color = if (isSelected) colors.success else colors.textSecondary,
-                shape = RoundedCornerShape(10.dp)
+                width = if (isHighlighted) 3.dp else 1.dp,
+                color = if (isHighlighted) colors.success else colors.textSecondary,
+                shape = RoundedCornerShape(12.dp)
             )
             .clickable { onClick() }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(6.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .padding(7.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            // Espacio grande para la imagen del platillo (_mini)
+            val miniRes = cardDrawableRes(card.id, mini = true)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(42.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(colors.textSecondary.copy(alpha = 0.35f)),
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(colors.textSecondary.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Plato", fontSize = 8.sp, color = paperText)
+                if (miniRes != null) {
+                    Image(
+                        painter = painterResource(miniRes),
+                        contentDescription = card.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Text(
+                        text = "Plato",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = paperText.copy(alpha = 0.7f)
+                    )
+                }
             }
-            Text(
-                text = card.name,
-                color = paperText,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                lineHeight = 11.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                StatLine(label = "Energía", value = card.energyPoints, textColor = paperText)
-                StatLine(label = "Saciedad", value = card.satietyPoints, textColor = paperText)
-                StatLine(label = "Vitalidad", value = card.vitalityPoints, textColor = paperText)
+
+            // Puntajes abreviados: E, S y V
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(paperText.copy(alpha = 0.08f))
+                    .padding(horizontal = 6.dp, vertical = 5.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AbbrevStat(letter = "E", value = card.energyPoints, textColor = paperText)
+                AbbrevStat(letter = "S", value = card.satietyPoints, textColor = paperText)
+                AbbrevStat(letter = "V", value = card.vitalityPoints, textColor = paperText)
             }
         }
     }
 }
 
 @Composable
-private fun StatLine(
-    label: String,
+private fun AbbrevStat(
+    letter: String,
     value: Int,
-    textColor: androidx.compose.ui.graphics.Color,
+    textColor: Color,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = label, fontSize = 8.sp, color = textColor.copy(alpha = 0.75f))
-        Text(text = "$value", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = textColor)
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = letter,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Bold,
+            color = textColor.copy(alpha = 0.7f)
+        )
+        Text(
+            text = "$value",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Black,
+            color = textColor
+        )
     }
+}
+
+@Composable
+private fun CardDetailDialog(
+    card: CardModel,
+    onDismiss: () -> Unit,
+) {
+    val colors = AppTheme.colors
+    val fullRes = cardDrawableRes(card.id, mini = false)
+
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+        ) {
+            if (fullRes != null) {
+                Image(
+                    painter = painterResource(fullRes),
+                    contentDescription = card.name,
+                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(320.dp)
+                        .background(colors.cardBg),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "[ Imagen: ${card.id} ]",
+                        color = colors.textSecondary,
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            CircleIconButton(
+                icon = R.drawable.ic_close,
+                contentDescription = stringResource(R.string.btn_close_description),
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            )
+        }
+    }
+}
+
+@DrawableRes
+private fun cardDrawableRes(cardId: String, mini: Boolean): Int? = when (cardId) {
+    "alfajor" -> if (mini) R.drawable.img_alfajor_mini else R.drawable.img_alfajor
+    "avena" -> if (mini) R.drawable.img_avena_mini else R.drawable.img_avena
+    "banana_mani" -> if (mini) R.drawable.img_banana_mani_mini else R.drawable.img_banana_mani
+    "calabaza" -> if (mini) R.drawable.img_calabaza_mini else R.drawable.img_calabaza
+    "churros" -> if (mini) R.drawable.img_churros_mini else R.drawable.img_churros
+    "empanada_frita" -> if (mini) R.drawable.img_empanada_frita_mini else R.drawable.img_empanada_frita
+    "ensalada_garbanzo" -> if (mini) R.drawable.img_ensalada_garbanzo_mini else R.drawable.img_ensalada_garbanzo
+    "frutillas_nueces" -> if (mini) R.drawable.img_frutillas_nueces_mini else R.drawable.img_frutillas_nueces
+    "galletitas" -> if (mini) R.drawable.img_galletitas_mini else R.drawable.img_galletitas
+    "hamburguesa" -> if (mini) R.drawable.img_hamburguesa_mini else R.drawable.img_hamburguesa
+    "licuado_verde" -> if (mini) R.drawable.img_licuado_verde_mini else R.drawable.img_licuado_verde
+    "medialunas" -> if (mini) R.drawable.img_medialunas_mini else R.drawable.img_medialunas
+    "merluza_con_pure" -> if (mini) R.drawable.img_merluza_con_pure_mini else R.drawable.img_merluza_con_pure
+    "muffin_avena_banana" -> if (mini) R.drawable.muffin_avena_banana_mini else R.drawable.img_muffin_avena_banana
+    "nuggets" -> if (mini) R.drawable.img_nuggets_mini else R.drawable.img_nuggets
+    "pancho" -> if (mini) R.drawable.img_pancho_mini else R.drawable.img_pancho
+    "ravioles" -> if (mini) R.drawable.img_ravioles_mini else R.drawable.img_ravioles
+    "salmon" -> if (mini) R.drawable.img_salmon_mini else R.drawable.img_salmon
+    "sandwich_milanesa" -> if (mini) R.drawable.img_sandwich_milanesa_mini else R.drawable.img_sandwich_milanesa
+    "tortilla_zapallito" -> if (mini) R.drawable.img_tortilla_zapallito_mini else R.drawable.img_tortilla_zapallito
+    "tostada_palta_huevo" -> if (mini) R.drawable.img_tostada_palta_huevo_mini else R.drawable.img_tostada_palta_huevo
+    "wok_lomo" -> if (mini) R.drawable.img_wok_lomo_mini else R.drawable.img_wok_lomo
+    "yogurt_griego" -> if (mini) R.drawable.img_yogurt_griego_mini else R.drawable.img_yogurt_griego
+    else -> null
 }

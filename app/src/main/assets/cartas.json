@@ -124,5 +124,41 @@
     "energia": 50,
     "saciedad": 90,
     "vitalidad": 20
+  },
+  {
+    "id": "yogurt_griego",
+    "nombre": "Yogurt griego, granola casera y arándanos",
+    "energia": 75,
+    "saciedad": 60,
+    "vitalidad": 70
+  },
+  {
+    "id": "tortilla_zapallito",
+    "nombre": "Tortilla de zapallito",
+    "energia": 65,
+    "saciedad": 90,
+    "vitalidad": 90
+  },
+  {
+    "id": "salmon",
+    "nombre": "Salmón a la plancha",
+    "energia": 85,
+    "saciedad": 80,
+    "vitalidad": 90
+  },
+  {
+    "id": "hamburguesa",
+    "nombre": "Hamburguesa completa",
+    "energia": 80,
+    "saciedad": 75,
+    "vitalidad": 30
+  },
+  {
+    "id": "muffin_avena_banana",
+    "nombre": "Muffin de avena y banana",
+    "energia": 80,
+    "saciedad": 70,
+    "vitalidad": 85
   }
+
 ]

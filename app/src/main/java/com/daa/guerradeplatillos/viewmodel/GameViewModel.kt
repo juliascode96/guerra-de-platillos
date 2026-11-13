@@ -124,8 +124,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun playTurn() {
-        if (isGameFinished) return
         val chosen = selectedCard ?: return
+        playCard(chosen)
+    }
+
+    fun playCard(chosen: CardModel) {
+        if (isGameFinished) return
+        if (chosen !in playerHand) return
         val rivalChoice = rivalHand.randomOrNull() ?: return
 
         playerHand = playerHand - chosen
