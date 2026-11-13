@@ -200,44 +200,24 @@ private fun SettingsContent(
             }
 
             // SECCIÓN 3: CUENTA Y SESIÓN
-            SectionHeader(
-                text = "SESIÓN",
-                modifier = Modifier.padding(top = 28.dp)
-            )
-            AppCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (isLoggedIn) {
+                Spacer(Modifier.height(28.dp))
+                Button(
+                    onClick = onLogoutClick,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.error,
+                        contentColor = colors.textPrimary,
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
                     Text(
-                        text = if (isLoggedIn) {
-                            "Sesión activa${userDisplayName?.let { ": $it" } ?: ""}"
-                        } else {
-                            "No iniciaste sesión"
-                        },
-                        color = colors.textSecondary,
-                        fontSize = 13.sp,
+                        text = "Cerrar sesión",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
                     )
-                    if (isLoggedIn) {
-                        Button(
-                            onClick = onLogoutClick,
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.error,
-                                contentColor = colors.textPrimary,
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(46.dp)
-                        ) {
-                            Text(
-                                text = "Cerrar sesión (Logout)",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                            )
-                        }
-                    }
                 }
             }
 

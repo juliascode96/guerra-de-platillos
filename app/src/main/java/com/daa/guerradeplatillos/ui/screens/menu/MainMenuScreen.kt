@@ -39,7 +39,7 @@ import com.daa.guerradeplatillos.ui.theme.AppTheme
 import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
 
 /**
- * Pantalla de Menú Principal con los dos minijuegos, Perfil, Ranking y Cerrar sesión.
+ * Pantalla de Menú Principal con los dos minijuegos, Perfil y Ranking.
  */
 @Composable
 fun MainMenuScreen(
@@ -55,20 +55,13 @@ fun MainMenuScreen(
 
     ScreenContainer {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header: volver + título + ruedita de opciones
+            // Header: volver + ruedita de opciones
             Box(modifier = Modifier.fillMaxWidth()) {
                 CircleIconButton(
                     icon = R.drawable.ic_arrow_back,
                     contentDescription = stringResource(R.string.btn_back_description),
                     onClick = onBack,
                     modifier = Modifier.align(Alignment.CenterStart)
-                )
-                Text(
-                    text = stringResource(R.string.main_menu_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontSize = 18.sp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.align(Alignment.Center)
                 )
                 CircleIconButton(
                     icon = R.drawable.ic_settings,
@@ -90,7 +83,7 @@ fun MainMenuScreen(
                 // Títulos superiores
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = stringResource(R.string.app_name),
+                        text = "Código Verde",
                         style = MaterialTheme.typography.headlineMedium,
                         color = colors.textHighlight,
                         textAlign = TextAlign.Center,
@@ -129,7 +122,7 @@ fun MainMenuScreen(
 
                 Spacer(Modifier.height(8.dp))
 
-                // Botones inferiores de Perfil, Ranking y Cerrar sesión
+                // Botones inferiores de Perfil y Ranking
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -139,7 +132,7 @@ fun MainMenuScreen(
                         onClick = onProfileClick,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(46.dp)
+                            .height(48.dp)
                     )
 
                     SecondaryButton(
@@ -147,15 +140,7 @@ fun MainMenuScreen(
                         onClick = onRankingClick,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(46.dp)
-                    )
-
-                    SecondaryButton(
-                        text = "Cerrar sesión",
-                        onClick = onLogoutClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(44.dp)
+                            .height(48.dp)
                     )
                 }
             }

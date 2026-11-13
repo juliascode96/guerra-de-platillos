@@ -23,6 +23,10 @@ class UserRepository(context: Context) {
     /** Apodo traído de Firestore (para precargar al crear el avatar). */
     val apodoRemoto: StateFlow<String> = _apodoRemoto.asStateFlow()
 
+    private val _highScore = MutableStateFlow(prefs.getInt(KEY_HIGH_SCORE, 0))
+    /** Puntaje máximo traído de Firestore (`users/{uid}.highScore`). */
+    val highScore: StateFlow<Int> = _highScore.asStateFlow()
+
     fun guardarAvatar(avatar: Avatar) {
         prefs.edit {
             putString(KEY_NOMBRE, avatar.nombre)
@@ -41,7 +45,7 @@ class UserRepository(context: Context) {
      *   para que el nuevo usuario complete su edad y género con su apodo precargado.
      * - Si ya tenía avatar en este teléfono, sincroniza su nombre con el apodo de Firestore.
      */
-    fun sincronizarConFirestore(uid: String, apodoFirestore: String) {
+    fun sincronizarConFirestore(uid: String, apodoFirestore: String, highScoreFirestore: Int = 0) {
         val lastUid = prefs.getString(KEY_UID, null)
         val apodoLimpio = apodoFirestore.trim()
 
@@ -51,14 +55,17 @@ class UserRepository(context: Context) {
                 clear()
                 putString(KEY_UID, uid)
                 putString(KEY_APODO_REMOTO, apodoLimpio)
+                putInt(KEY_HIGH_SCORE, highScoreFirestore)
             }
             _apodoRemoto.value = apodoLimpio
+            _highScore.value = highScoreFirestore
             _avatar.value = null
             return
         }
 
         prefs.edit {
             putString(KEY_UID, uid)
+            putInt(KEY_HIGH_SCORE, highScoreFirestore)
             if (apodoLimpio.isNotEmpty()) {
                 putString(KEY_APODO_REMOTO, apodoLimpio)
                 if (prefs.getBoolean(KEY_HAS_AVATAR, false)) {
@@ -66,6 +73,7 @@ class UserRepository(context: Context) {
                 }
             }
         }
+        _highScore.value = highScoreFirestore
         if (apodoLimpio.isNotEmpty()) {
             _apodoRemoto.value = apodoLimpio
         }
@@ -75,6 +83,7 @@ class UserRepository(context: Context) {
     fun borrarAvatar() {
         prefs.edit { clear() }
         _apodoRemoto.value = ""
+        _highScore.value = 0
         _avatar.value = null
     }
 
@@ -95,6 +104,7 @@ class UserRepository(context: Context) {
         const val PREFS_NAME = "GuerraDePlatillosUserPrefs"
         const val KEY_UID = "user_uid"
         const val KEY_APODO_REMOTO = "user_apodo_remoto"
+        const val KEY_HIGH_SCORE = "user_high_score"
         const val KEY_NOMBRE = "user_nombre"
         const val KEY_EDAD = "user_edad"
         const val KEY_SEXO = "user_sexo"

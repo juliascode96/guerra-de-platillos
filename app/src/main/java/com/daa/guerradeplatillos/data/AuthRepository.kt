@@ -125,7 +125,8 @@ class AuthRepository(
     }
 
     /**
-     * Lee el documento `users/{uid}` desde Firestore y sincroniza el `apodo` en el almacenamiento local.
+     * Lee el documento `users/{uid}` desde Firestore y sincroniza `apodo` y `highScore`
+     * en el almacenamiento local.
      */
     suspend fun sincronizarDesdeFirestore(uid: String, fallbackApodo: String = "") {
         try {
@@ -137,12 +138,19 @@ class AuthRepository(
                 ?.takeIf { it.isNotBlank() }
                 ?: snapshot.getString(FIELD_USERNAME)
                 ?: fallbackApodo
-            userRepository.sincronizarConFirestore(uid, apodoRemoto)
+            val highScore = snapshot.getLong(FIELD_HIGH_SCORE)?.toInt() ?: 0
+            userRepository.sincronizarConFirestore(uid, apodoRemoto, highScore)
         } catch (_: Exception) {
             if (fallbackApodo.isNotBlank()) {
                 userRepository.sincronizarConFirestore(uid, fallbackApodo)
             }
         }
+    }
+
+    /** Refresca los datos del usuario logueado desde Firestore (ej. highScore). */
+    suspend fun refrescarUsuarioActual() {
+        val uid = auth.currentUser?.uid ?: return
+        sincronizarDesdeFirestore(uid)
     }
 
     /**

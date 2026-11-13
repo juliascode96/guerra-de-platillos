@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.daa.guerradeplatillos.model.CardModel
 import com.daa.guerradeplatillos.sensors.ShakeDetector
+import com.daa.guerradeplatillos.util.SoundManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -105,6 +106,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     val totalRounds: Int = CARDS_PER_PLAYER
     val isWaitingReveal: Boolean
         get() = playerPlayedCard != null && !areCardsRevealed
+    val canClearBoardForNextRound: Boolean
+        get() = areCardsRevealed && !isGameFinished && playerPlayedCard != null
     val isGameFinished: Boolean
         get() = roundsPlayed >= totalRounds
 
@@ -170,6 +173,21 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         roundsPlayed += 1
         lastRoundResult = result
         areCardsRevealed = true
+
+        when (result.winner) {
+            RoundWinner.PLAYER -> SoundManager.playResultPositive()
+            RoundWinner.RIVAL -> SoundManager.playResultNegative()
+            RoundWinner.TIE -> SoundManager.playBubbly()
+        }
+    }
+
+    /** Limpia las cartas ya jugadas de la mesa para comenzar la siguiente ronda. */
+    fun clearBoardForNextRound() {
+        if (!canClearBoardForNextRound) return
+        playerPlayedCard = null
+        rivalPlayedCard = null
+        areCardsRevealed = false
+        lastRoundResult = null
     }
 
     /**

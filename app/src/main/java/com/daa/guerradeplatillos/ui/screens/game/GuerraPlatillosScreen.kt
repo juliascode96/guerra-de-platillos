@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -103,118 +104,111 @@ fun GuerraPlatillosScreen(
 
     ScreenContainer {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(
+                    enabled = viewModel.canClearBoardForNextRound,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) {
+                    viewModel.clearBoardForNextRound()
+                },
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // 1. Cabecera: volver + título + ajustes, y marcador de ronda/puntaje
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    CircleIconButton(
-                        icon = R.drawable.ic_arrow_back,
-                        contentDescription = stringResource(R.string.btn_back_description),
-                        onClick = onBack,
-                        modifier = Modifier.align(Alignment.CenterStart)
-                    )
-                    Text(
-                        text = "Guerra de Platillos",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontSize = 18.sp,
-                        color = colors.textHighlight,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                    CircleIconButton(
-                        icon = R.drawable.ic_settings,
-                        contentDescription = stringResource(R.string.btn_settings_description),
-                        onClick = onSettingsClick,
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Marcador de ronda y puntos acumulados
-                Row(
+            // 1. Cabecera: volver + contador de ronda + ajustes (sin título para evitar cortes)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircleIconButton(
+                    icon = R.drawable.ic_arrow_back,
+                    contentDescription = stringResource(R.string.btn_back_description),
+                    onClick = onBack,
+                )
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
                         .background(colors.cardBg)
                         .border(1.dp, colors.cardBorder, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "VOS: ${viewModel.playerScore} pts",
-                        color = colors.success,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
-                    )
                     Text(
                         text = "Ronda ${viewModel.roundsPlayed}/${viewModel.totalRounds}",
                         color = colors.textPrimary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "RIVAL: ${viewModel.rivalScore} pts",
-                        color = colors.textSecondary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
+                CircleIconButton(
+                    icon = R.drawable.ic_settings,
+                    contentDescription = stringResource(R.string.btn_settings_description),
+                    onClick = onSettingsClick,
+                )
             }
 
-            // 2. Tablero de Duelo VS + resultado de la última ronda
+            // 2. Tablero de Duelo VS (más amplio) + resultado de la última ronda
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(vertical = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .weight(1f)
                         .clip(RoundedCornerShape(16.dp))
                         .background(colors.cardBg)
                         .border(1.dp, colors.success.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
                         .padding(12.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "RIVAL", color = colors.textSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            MiniCard(
-                                card = viewModel.rivalPlayedCard,
-                                width = 105.dp,
-                                height = 148.dp,
-                                isFaceDown = viewModel.isWaitingReveal,
-                                onClick = {
-                                    if (!viewModel.isWaitingReveal) {
-                                        viewModel.rivalPlayedCard?.let { detailCard = it }
+                        Text(text = "VS", color = colors.success, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(text = "VOS", color = colors.success, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                MiniCard(
+                                    card = viewModel.playerPlayedCard,
+                                    width = 136.dp,
+                                    height = 204.dp,
+                                    isFaceDown = viewModel.isWaitingReveal,
+                                    onClick = {
+                                        if (!viewModel.isWaitingReveal) {
+                                            viewModel.playerPlayedCard?.let { detailCard = it }
+                                        }
                                     }
-                                }
-                            )
-                        }
+                                )
+                            }
 
-                        Text(text = "VS", color = colors.success, fontSize = 22.sp, fontWeight = FontWeight.Black)
-
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "VOS", color = colors.success, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            MiniCard(
-                                card = viewModel.playerPlayedCard,
-                                width = 105.dp,
-                                height = 148.dp,
-                                isFaceDown = viewModel.isWaitingReveal,
-                                onClick = {
-                                    if (!viewModel.isWaitingReveal) {
-                                        viewModel.playerPlayedCard?.let { detailCard = it }
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(text = "RIVAL", color = colors.textSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                MiniCard(
+                                    card = viewModel.rivalPlayedCard,
+                                    width = 136.dp,
+                                    height = 204.dp,
+                                    isFaceDown = viewModel.isWaitingReveal,
+                                    onClick = {
+                                        if (!viewModel.isWaitingReveal) {
+                                            viewModel.rivalPlayedCard?.let { detailCard = it }
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }
@@ -225,28 +219,30 @@ fun GuerraPlatillosScreen(
                 } else {
                     viewModel.lastRoundResult?.let { result ->
                         Spacer(modifier = Modifier.height(8.dp))
-                        RoundResultBanner(result = result)
+                        RoundResultBanner(
+                            result = result,
+                            canContinue = viewModel.canClearBoardForNextRound,
+                            onTapToClear = { viewModel.clearBoardForNextRound() }
+                        )
                     }
                 }
             }
 
-            // 3. Mano del Jugador (sin botón de jugar: se arrastra hacia arriba para jugar, se toca para ver detalle)
+            // 3. Mano del Jugador (sin cartel duplicado cuando espera giroscopio ni al terminar)
             Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = when {
-                        viewModel.isGameFinished -> "● ¡Terminaron las 3 rondas!"
-                        viewModel.isWaitingReveal -> "● ¡Girá o agitá el celular para revelar esta ronda!"
-                        else -> "● Arrastrá una carta hacia arriba para jugar · Tocá para ver detalle"
-                    },
-                    color = colors.textPrimary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(10.dp))
+                if (!viewModel.isWaitingReveal && !viewModel.isGameFinished) {
+                    Text(
+                        text = "● Arrastrá una carta hacia arriba para jugar · Tocá para ver detalle",
+                        color = colors.textPrimary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
 
                 if (viewModel.isGameFinished) {
                     PrimaryButton(
-                        text = "VER RESULTADO FINAL  →",
+                        text = "FINALIZAR PARTIDA  →",
                         onClick = { onFinishGame(viewModel.playerScore, viewModel.rivalScore) },
                         shape = RoundedCornerShape(16.dp),
                         minHeight = 52.dp,
@@ -260,7 +256,7 @@ fun GuerraPlatillosScreen(
                         viewModel.playerHand.forEach { card ->
                             DraggableHandCard(
                                 card = card,
-                                dragEnabled = !viewModel.isWaitingReveal,
+                                dragEnabled = !viewModel.isWaitingReveal && !viewModel.canClearBoardForNextRound,
                                 onTap = { detailCard = card },
                                 onPlay = { viewModel.playCard(card) }
                             )
@@ -370,15 +366,24 @@ private fun RevealPromptBanner(onFallbackTap: () -> Unit) {
 }
 
 @Composable
-private fun RoundResultBanner(result: RoundResult) {
+private fun RoundResultBanner(
+    result: RoundResult,
+    canContinue: Boolean,
+    onTapToClear: () -> Unit,
+) {
     val colors = AppTheme.colors
-    val (message, accentColor) = when (result.winner) {
+    val (baseMessage, accentColor) = when (result.winner) {
         RoundWinner.PLAYER ->
-            "Ronda ${result.roundNumber}: ¡Ganaste! +${result.playerPointsGained} pts (${result.playerCategoriesWon}/3)" to colors.success
+            "Ronda ${result.roundNumber}: ¡Ganaste! +${result.playerPointsGained} pts" to colors.success
         RoundWinner.RIVAL ->
             "Ronda ${result.roundNumber}: Ganó el rival (+${result.rivalPointsGained} pts)" to colors.error
         RoundWinner.TIE ->
             "Ronda ${result.roundNumber}: Empate (+${result.playerPointsGained} vos / +${result.rivalPointsGained} rival)" to colors.warning
+    }
+    val message = if (canContinue) {
+        "$baseMessage · Tocá la pantalla para seguir"
+    } else {
+        baseMessage
     }
 
     Box(
@@ -387,7 +392,8 @@ private fun RoundResultBanner(result: RoundResult) {
             .clip(RoundedCornerShape(10.dp))
             .background(colors.cardBg)
             .border(1.dp, accentColor, RoundedCornerShape(10.dp))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .then(if (canContinue) Modifier.clickable { onTapToClear() } else Modifier)
+            .padding(horizontal = 10.dp, vertical = 7.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(

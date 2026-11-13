@@ -45,20 +45,13 @@ fun GameOverScreen(
 
     ScreenContainer {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header: volver al menú + título + ruedita de opciones
+            // Header: volver al menú + ruedita de opciones
             Box(modifier = Modifier.fillMaxWidth()) {
                 CircleIconButton(
                     icon = R.drawable.ic_arrow_back,
                     contentDescription = stringResource(R.string.btn_back_description),
                     onClick = onBackToMenu,
                     modifier = Modifier.align(Alignment.CenterStart)
-                )
-                Text(
-                    text = stringResource(R.string.game_over_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontSize = 20.sp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.align(Alignment.Center)
                 )
                 CircleIconButton(
                     icon = R.drawable.ic_settings,
