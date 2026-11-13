@@ -153,7 +153,7 @@ fun GuerraPlatillosScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(vertical = 10.dp),
+                    .padding(vertical = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -164,51 +164,80 @@ fun GuerraPlatillosScreen(
                         .clip(RoundedCornerShape(16.dp))
                         .background(colors.cardBg)
                         .border(1.dp, colors.success.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
-                        .padding(12.dp),
+                        .padding(10.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(horizontalAlignment = Alignment.Start) {
+                                Text(
+                                    text = "VOS:",
+                                    color = colors.textSecondary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "${viewModel.playerScore} pts",
+                                    color = colors.textSecondary,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    text = "RIVAL:",
+                                    color = colors.error,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "${viewModel.rivalScore} pts",
+                                    color = colors.error,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(text = "VS", color = colors.success, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(text = "VOS", color = colors.success, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.height(6.dp))
-                                MiniCard(
-                                    card = viewModel.playerPlayedCard,
-                                    width = 136.dp,
-                                    height = 204.dp,
-                                    isFaceDown = viewModel.isWaitingReveal,
-                                    onClick = {
-                                        if (!viewModel.isWaitingReveal) {
-                                            viewModel.playerPlayedCard?.let { detailCard = it }
-                                        }
+                            MiniCard(
+                                card = viewModel.playerPlayedCard,
+                                width = 136.dp,
+                                height = 204.dp,
+                                isFaceDown = viewModel.isWaitingReveal,
+                                onClick = {
+                                    if (!viewModel.isWaitingReveal) {
+                                        viewModel.playerPlayedCard?.let { detailCard = it }
                                     }
-                                )
-                            }
+                                }
+                            )
 
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(text = "RIVAL", color = colors.textSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.height(6.dp))
-                                MiniCard(
-                                    card = viewModel.rivalPlayedCard,
-                                    width = 136.dp,
-                                    height = 204.dp,
-                                    isFaceDown = viewModel.isWaitingReveal,
-                                    onClick = {
-                                        if (!viewModel.isWaitingReveal) {
-                                            viewModel.rivalPlayedCard?.let { detailCard = it }
-                                        }
+                            MiniCard(
+                                card = viewModel.rivalPlayedCard,
+                                width = 136.dp,
+                                height = 204.dp,
+                                isFaceDown = viewModel.isWaitingReveal,
+                                onClick = {
+                                    if (!viewModel.isWaitingReveal) {
+                                        viewModel.rivalPlayedCard?.let { detailCard = it }
                                     }
-                                )
-                            }
+                                }
+                            )
                         }
                     }
                 }
