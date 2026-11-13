@@ -80,6 +80,11 @@ class UserRepository(context: Context) {
         _avatar.value = leerAvatar()
     }
 
+    fun actualizarHighScoreLocal(nuevoHighScore: Int) {
+        prefs.edit { putInt(KEY_HIGH_SCORE, nuevoHighScore) }
+        _highScore.value = nuevoHighScore
+    }
+
     fun borrarAvatar() {
         prefs.edit { clear() }
         _apodoRemoto.value = ""

@@ -190,6 +190,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onBack = { navController.popBackStack() },
                 onFinishGame = { playerScore, rivalScore ->
                     SoundManager.playGameFinish()
+                    app.authRepository.registrarResultadoPartida(playerScore, rivalScore)
                     navController.navigate("${Routes.GAME_OVER}?playerScore=$playerScore&rivalScore=$rivalScore") {
                         popUpTo(Routes.GAME) { inclusive = true }
                         launchSingleTop = true
