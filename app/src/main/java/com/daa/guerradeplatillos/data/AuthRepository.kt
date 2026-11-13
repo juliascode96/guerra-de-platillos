@@ -1,11 +1,14 @@
 package com.daa.guerradeplatillos.data
 
+import android.util.Log
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -125,7 +128,8 @@ class AuthRepository(
     }
 
     /**
-     * Lee el documento `users/{uid}` desde Firestore y sincroniza el `apodo` en el almacenamiento local.
+     * Lee el documento `users/{uid}` desde Firestore y sincroniza `apodo` y `highScore`
+     * en el almacenamiento local.
      */
     suspend fun sincronizarDesdeFirestore(uid: String, fallbackApodo: String = "") {
         try {
@@ -137,12 +141,19 @@ class AuthRepository(
                 ?.takeIf { it.isNotBlank() }
                 ?: snapshot.getString(FIELD_USERNAME)
                 ?: fallbackApodo
-            userRepository.sincronizarConFirestore(uid, apodoRemoto)
+            val highScore = snapshot.getLong(FIELD_HIGH_SCORE)?.toInt() ?: 0
+            userRepository.sincronizarConFirestore(uid, apodoRemoto, highScore)
         } catch (_: Exception) {
             if (fallbackApodo.isNotBlank()) {
                 userRepository.sincronizarConFirestore(uid, fallbackApodo)
             }
         }
+    }
+
+    /** Refresca los datos del usuario logueado desde Firestore (ej. highScore). */
+    suspend fun refrescarUsuarioActual() {
+        val uid = auth.currentUser?.uid ?: return
+        sincronizarDesdeFirestore(uid)
     }
 
     /**
@@ -165,6 +176,89 @@ class AuthRepository(
         }
     }
 
+    /**
+     * Registra la partida en la colección `matches` de Firestore y actualiza el
+     * `highScore` del usuario en `users/{uid}` si superó su marca anterior.
+     */
+    fun registrarResultadoPartida(playerScore: Int, rivalScore: Int) {
+        val uid = auth.currentUser?.uid ?: return
+        val nickname = userRepository.avatar.value?.nombre?.takeIf { it.isNotBlank() }
+            ?: userRepository.apodoRemoto.value.takeIf { it.isNotBlank() }
+            ?: "Jugador"
+
+        ioScope.launch {
+            try {
+                // 1. Consultar highScore actual en Firestore (con respaldo local)
+                val userDocRef = firestore.collection(COLLECTION_USERS).document(uid)
+                val snapshot = try {
+                    userDocRef.get().await()
+                } catch (_: Exception) {
+                    null
+                }
+                val highScoreActual = snapshot?.getLong(FIELD_HIGH_SCORE)?.toInt()
+                    ?: userRepository.highScore.value
+
+                if (playerScore > highScoreActual) {
+                    userRepository.actualizarHighScoreLocal(playerScore)
+                    userDocRef
+                        .set(mapOf(FIELD_HIGH_SCORE to playerScore.toLong()), SetOptions.merge())
+                        .await()
+                }
+
+                // 2. Guardar la partida en la colección `matches`
+                val ganoUsuario = playerScore > rivalScore
+                val matchData = mapOf(
+                    FIELD_MATCH_USER_ID to uid,
+                    FIELD_MATCH_NICKNAME to nickname,
+                    FIELD_MATCH_TIMESTAMP to Timestamp.now(),
+                    FIELD_MATCH_WINNER to ganoUsuario,
+                    FIELD_MATCH_WINNER_SCORE to maxOf(playerScore, rivalScore).toDouble(),
+                    FIELD_MATCH_WINNER_USER_ID to if (ganoUsuario) uid else "RIVAL",
+                )
+                firestore.collection(COLLECTION_MATCHES)
+                    .add(matchData)
+                    .await()
+            } catch (e: Exception) {
+                Log.e("AuthRepository", "Error al guardar resultado de partida", e)
+            }
+        }
+    }
+
+    /**
+     * Obtiene las [limit] partidas con mayor puntaje donde ganó el jugador,
+     * ordenadas de mayor a menor `winnerScore`.
+     */
+    suspend fun obtenerTopRankings(limit: Int = 10): Result<List<RankingEntry>> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_MATCHES)
+                .orderBy(FIELD_MATCH_WINNER_SCORE, Query.Direction.DESCENDING)
+                .limit((limit * 3).toLong())
+                .get()
+                .await()
+
+            val currentUid = auth.currentUser?.uid
+            val entries = snapshot.documents
+                .filter { doc -> doc.getBoolean(FIELD_MATCH_WINNER) == true }
+                .take(limit)
+                .map { doc ->
+                    val score = doc.getDouble(FIELD_MATCH_WINNER_SCORE)?.toInt()
+                        ?: doc.getLong(FIELD_MATCH_WINNER_SCORE)?.toInt()
+                        ?: 0
+                    RankingEntry(
+                        id = doc.id,
+                        nickname = doc.getString(FIELD_MATCH_NICKNAME)?.takeIf { it.isNotBlank() } ?: "Jugador",
+                        score = score,
+                        timestampMillis = doc.getTimestamp(FIELD_MATCH_TIMESTAMP)?.toDate()?.time,
+                        isCurrentUser = currentUid != null && doc.getString(FIELD_MATCH_WINNER_USER_ID) == currentUid,
+                    )
+                }
+            Result.success(entries)
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error al obtener rankings", e)
+            Result.failure(e)
+        }
+    }
+
     /** Cierra la sesión actual de Firebase. */
     fun cerrarSesion() {
         auth.signOut()
@@ -183,11 +277,27 @@ class AuthRepository(
 
     companion object {
         const val COLLECTION_USERS = "users"
+        const val COLLECTION_MATCHES = "matches"
         const val FIELD_USERNAME = "username"
         const val FIELD_APODO = "apodo"
         const val FIELD_HIGH_SCORE = "highScore"
+
+        const val FIELD_MATCH_USER_ID = "userId"
+        const val FIELD_MATCH_NICKNAME = "nicknameUser"
+        const val FIELD_MATCH_TIMESTAMP = "timestamp"
+        const val FIELD_MATCH_WINNER = "winner"
+        const val FIELD_MATCH_WINNER_SCORE = "winnerScore"
+        const val FIELD_MATCH_WINNER_USER_ID = "winnerUserId"
 
         private const val SYNTHETIC_DOMAIN = "guerradeplatillos.app"
         private val USERNAME_REGEX = Regex("^[a-z0-9_.-]{3,20}$")
     }
 }
+
+data class RankingEntry(
+    val id: String,
+    val nickname: String,
+    val score: Int,
+    val timestampMillis: Long?,
+    val isCurrentUser: Boolean = false,
+)

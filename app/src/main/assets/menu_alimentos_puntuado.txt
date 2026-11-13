@@ -1,0 +1,41 @@
+Comida	Tipo	Opción de Alimento	Nivel Saludable (0-2)	Saciedad (0-2)	Vitalidad (0-2)	Imagen	NombreCorto
+Desayuno	Saludable	Tostadas integrales con palta, huevo poché y semillas	2	2	2	img_01_desayuno_tostadas_palta	Tostadas con palta
+Desayuno	Saludable	Porridge de avena cocida con banana, canela y nueces	2	2	2	img_02_desayuno_porridge_avena	Porridge de avena
+Desayuno	Saludable	Yogur griego natural, granola casera y arándanos	2	1	2	img_03_desayuno_yogur_griego	Yogur griego
+Desayuno	Saludable	Ombú de claras de huevo con espinaca, tomate y queso magro	2	2	2	img_04_desayuno_omelette_claras	Omelette de claras
+Desayuno	Saludable	Licuado verde de espinaca, manzana y apio + almendras	2	1	2	img_05_desayuno_licuado_verde	Licuado verde
+Desayuno	No Saludable	Medialunas de grasa o manteca rellenas de dulce de leche	-1	1	-1	img_06_desayuno_medialunas_dulce_leche	Medialunas c/ dulce de leche
+Desayuno	No Saludable	Donas glaseadas cubiertas de azúcar o chocolate	-1	-1	-1	img_07_desayuno_donas_glaseadas	Donas glaseadas
+Desayuno	No Saludable	Tostados de pan blanco con abundante jamón, queso y manteca	-1	1	1	img_08_desayuno_tostado_jamon_queso	Tostado jamón y queso
+Desayuno	No Saludable	Torre de panqueques americanos con manteca y jarabe de arce	-1	1	-1	img_09_desayuno_panqueques_jarabe	Panqueques con jarabe
+Desayuno	No Saludable	Tazón de cereales azucarados o chocolatados con leche entera	-1	-1	-1	img_10_desayuno_cereales_azucarados	Cereales azucarados
+Almuerzo	Saludable	Pechuga de pollo a la plancha con ensalada multicolor	2	2	2	img_11_almuerzo_pollo_ensalada	Pollo con ensalada
+Almuerzo	Saludable	Filete de merluza al horno con puré de calabaza	2	2	2	img_12_almuerzo_merluza_calabaza	Merluza con calabaza
+Almuerzo	Saludable	Ensalada de garbanzos, lentejas, vegetales y palta	2	2	2	img_13_almuerzo_ensalada_legumbres	Ensalada de legumbres
+Almuerzo	Saludable	Bowl de quinoa con brócoli, calabacín, almendras y tofu	2	2	2	img_14_almuerzo_quinoa_brocoli	Bowl de quinoa
+Almuerzo	Saludable	Budín casero de espinaca y calabaza con tomates cherry	2	1	2	img_15_almuerzo_budin_espinaca	Budín de espinaca
+Almuerzo	No Saludable	Hamburguesa con cheddar, bacon, huevo frito y papas fritas	-1	2	-1	img_16_almuerzo_hamburguesa_papas	Hamburguesa con papas
+Almuerzo	No Saludable	Milanesa napolitana frita con puré de papas con manteca	-1	2	-1	img_17_almuerzo_milanesa_napolitana	Milanesa napolitana
+Almuerzo	No Saludable	Ravioles con estofado de carne abundante y queso rallado	-1	2	-1	img_18_almuerzo_ravioles_estofado	Ravioles con estofado
+Almuerzo	No Saludable	Nuggets de pollo fritos con salsa barbacoa y aderezos	-1	1	-1	img_19_almuerzo_nuggets_barbacoa	Nuggets con barbacoa
+Almuerzo	No Saludable	Sándwich de milanesa frita en pan francés con mayonesa	-1	2	-1	img_20_almuerzo_sandwich_milanesa	Sándwich de milanesa
+Merienda	Saludable	Rodajas de manzana o banana con mantequilla de maní natural	2	2	2	img_21_merienda_fruta_mantequilla_mani	Fruta con pasta de maní
+Merienda	Saludable	Muffin casero de avena, banana y chips de chocolate amargo	2	1	2	img_22_merienda_muffin_avena_banana	Muffin de avena
+Merienda	Saludable	Galletas de arroz integral con queso blanco descremado y sésamo	2	1	1	img_23_merienda_galletas_arroz_queso	Galletas de arroz
+Merienda	Saludable	Frutillas frescas picadas con nueces y jugo de limón	2	1	2	img_24_merienda_frutillas_nueces	Frutillas con nueces
+Merienda	Saludable	Hummus de garbanzo con bastones de zanahoria, apio y pepino	2	2	2	img_25_merienda_hummus_bastones_vegetales	Hummus con vegetales
+Merienda	No Saludable	Porción de torta húmeda de chocolate, brownie o cheesecake	-1	1	-1	img_26_merienda_torta_chocolate	Torta de chocolate
+Merienda	No Saludable	Paquete de galletitas comerciales rellenas de crema	-1	-1	-1	img_27_merienda_galletitas_rellenas	Galletitas rellenas
+Merienda	No Saludable	Bizcochitos de grasa o cuernitos de panadería con mate dulce	-1	1	-1	img_28_merienda_bizcochitos_mate	Bizcochitos con mate
+Merienda	No Saludable	Alfajor triple relleno de dulce de leche con baño de chocolate	-1	1	-1	img_29_merienda_alfajor_triple	Alfajor triple
+Merienda	No Saludable	Dos churros fritos rellenos de dulce de leche con azúcar	-1	-1	-1	img_30_merienda_churros_dulce_leche	Churros
+Cena	Saludable	Wok de lomo magro salteado con vegetales y salsa de soja baja en sodio	2	2	2	img_31_cena_wok_lomo_vegetales	Wok de lomo
+Cena	Saludable	Posta de salmón a la plancha con espárragos y tomates asados	2	2	2	img_32_cena_salmon_esparragos	Salmón con espárragos
+Cena	Saludable	Media calabaza al horno rellena de espinaca, choclo y queso gratinado	2	2	2	img_33_cena_calabaza_rellena	Calabaza rellena
+Cena	Saludable	Sopa crema casera de zapallo, zanahoria y semillas de girasol	2	1	2	img_34_cena_sopa_crema_zapallo	Sopa crema de zapallo
+Cena	Saludable	Tortilla individual de zapallitos verdes y huevo a la sartén	2	2	2	img_35_cena_tortilla_zapallitos	Tortilla de zapallitos
+Cena	No Saludable	Tres porciones de pizza de muzzarella con aceite de ajo	-1	2	-1	img_36_cena_pizza_muzzarella	Pizza de muzzarella
+Cena	No Saludable	Tres empanadas de carne o jamón y queso fritas en abundancia	-1	2	-1	img_37_cena_empanadas_fritas	Empanadas fritas
+Cena	No Saludable	Papas fritas cubiertas de queso cheddar fundido y bacon crocante	-1	2	-1	img_38_cena_papas_cheddar	Papas con cheddar
+Cena	No Saludable	Tres tacos de harina blanca con carne picada común, queso y crema agria	-1	2	-1	img_39_cena_tacos	Tacos
+Cena	No Saludable	Dos panchos en pan blanco con lluvia de papas pay y aderezos	-1	1	-1	img_40_cena_panchos	Panchos

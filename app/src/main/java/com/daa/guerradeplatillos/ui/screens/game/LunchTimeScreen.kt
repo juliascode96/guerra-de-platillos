@@ -1,124 +1,191 @@
 package com.daa.guerradeplatillos.ui.screens.game
 
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.daa.guerradeplatillos.R
+import com.daa.guerradeplatillos.model.Alimento
+import com.daa.guerradeplatillos.model.ReglasJuego
+import com.daa.guerradeplatillos.ui.components.CircleIconButton
+import com.daa.guerradeplatillos.ui.components.PrimaryButton
 import com.daa.guerradeplatillos.ui.components.ScreenContainer
-import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
+import com.daa.guerradeplatillos.ui.theme.AppTheme
+import com.daa.guerradeplatillos.viewmodel.LunchTimeEvent
+import com.daa.guerradeplatillos.viewmodel.LunchTimeViewModel
 
-data class FoodItem(
-    val id: Int,
-    val name: String,
-    val isHealthy: Boolean
-)
+/** Resuelve la imagen (res/drawable) de un alimento; usa el logo si no existe. */
+private fun imagenRes(context: Context, alimento: Alimento): Int {
+    if (alimento.imagen.isNotEmpty()) {
+        val id = context.resources.getIdentifier(alimento.imagen, "drawable", context.packageName)
+        if (id != 0) return id
+    }
+    return R.drawable.logo_app
+}
 
+private fun nombreCorto(alimento: Alimento): String =
+    alimento.nombreCorto.ifEmpty { alimento.opcion }
+
+/** Pantalla de juego de Lunch Time: el jugador arma su bandeja antes de que se acabe el tiempo. */
 @Composable
 fun LunchTimeScreen(
-    onConfirmMenu: () -> Unit,
-    onBack: () -> Unit
+    viewModel: LunchTimeViewModel,
+    onFinish: () -> Unit,
+    onExit: () -> Unit
 ) {
-    val accentGreen = Color(0xFFA5D6A7)
-    val cardBg = Color(0xFF162523)
-    val selectedBorder = Color(0xFFFFD54F) // Amarillo/Dorado para la selección como en tu imagen
+    val colors = AppTheme.colors
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Lista de ejemplo de alimentos para el desayuno
-    val foodList = listOf(
-        FoodItem(1, "Tostadas integrales con palta", true),
-        FoodItem(2, "Porridge de avena con banana", true),
-        FoodItem(3, "Medialunas de grasa", false),
-        FoodItem(4, "Donas glaseadas", false),
-        FoodItem(5, "Yogur griego con granola", true),
-        FoodItem(6, "Cereales azucarados", false)
-    )
+    val comida by viewModel.comidaJuego.collectAsStateWithLifecycle()
+    val alimentos by viewModel.alimentos.collectAsStateWithLifecycle()
+    val bandeja by viewModel.bandeja.collectAsStateWithLifecycle()
+    val tiempoMs by viewModel.tiempoRestanteMs.collectAsStateWithLifecycle()
 
-    // Estado de los elementos seleccionados (IDs)
-    var selectedItems by remember { mutableStateOf(setOf(1, 5)) } // Ejemplo con 2 seleccionados por defecto
+    // El timer se pausa cuando la app pasa a segundo plano y se reanuda al volver
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> viewModel.reanudarTimer()
+                Lifecycle.Event.ON_PAUSE -> viewModel.pausarTimer()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.pausarTimer()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.eventos.collect { evento ->
+            when (evento) {
+                is LunchTimeEvent.ShowToast ->
+                    Toast.makeText(context, evento.mensaje, Toast.LENGTH_SHORT).show()
+                LunchTimeEvent.IrAlResultado -> onFinish()
+                LunchTimeEvent.IrAlJuego -> Unit
+            }
+        }
+    }
+
+    val segundos = (tiempoMs / 1000).toInt()
+    val timerText = if (tiempoMs <= 0) "Se acabó el tiempo" else "⏱ ${segundos}s"
+    val timerColor = if (segundos <= 10 && tiempoMs > 0) colors.error else colors.textPrimary
 
     ScreenContainer {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Cabecera superior
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
-                        Text(text = "‹", color = accentGreen, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                    }
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Cabecera: salir (X) + comida + horario
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircleIconButton(
+                    icon = R.drawable.ic_close,
+                    contentDescription = stringResource(R.string.btn_close_description),
+                    onClick = {
+                        viewModel.cancelarPartida()
+                        onExit()
+                    },
+                )
 
-                    // Chip de tipo de comida
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF1E3330))
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = "● DESAYUNO",
-                            color = accentGreen,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    // Chip de horario
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF1E3330))
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = "🕒 6-10hs",
-                            color = Color.LightGray,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Subtítulo de instrucción
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF162523))
-                        .padding(10.dp),
-                    contentAlignment = Alignment.Center
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(colors.cardBorder)
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = "🍳 Elegí 3 alimentos para tu desayuno",
-                        color = accentGreen,
-                        fontSize = 14.sp,
+                        text = "● ${comida.titulo.uppercase()}",
+                        color = colors.success,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(colors.cardBorder)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "🕒 ${comida.horario}",
+                        color = colors.textSecondary,
+                        fontSize = 11.sp
                     )
                 }
             }
 
-            // Grilla de alimentos (2 columnas x 3 filas)
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Instrucción + temporizador
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.cardBg)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Elegí ${ReglasJuego.MAX_ALIMENTOS} alimentos para tu ${comida.titulo.lowercase()}",
+                    color = colors.success,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = timerText,
+                    color = timerColor,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // Grilla de alimentos (2 columnas)
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier
@@ -128,133 +195,120 @@ fun LunchTimeScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(foodList) { food ->
-                    val isSelected = selectedItems.contains(food.id)
+                items(alimentos, key = { it.opcion }) { food ->
+                    val isSelected = bandeja.contains(food)
+                    val shape = RoundedCornerShape(16.dp)
+                    val imagen = remember(food.imagen) { imagenRes(context, food) }
 
-                    Card(
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = cardBg),
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(175.dp)
+                            .clip(shape)
+                            .background(colors.cardBg)
                             .border(
                                 width = if (isSelected) 2.dp else 1.dp,
-                                color = if (isSelected) selectedBorder else Color(0xFF1E3330),
-                                shape = RoundedCornerShape(16.dp)
+                                color = if (isSelected) colors.warning else colors.cardBorder,
+                                shape = shape
                             )
-                            .clickable {
-                                selectedItems = if (isSelected) {
-                                    selectedItems - food.id
-                                } else {
-                                    if (selectedItems.size < 3) selectedItems + food.id else selectedItems
-                                }
-                            }
+                            .clickable { viewModel.alternarAlimento(food) },
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.SpaceBetween
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp)
+                                .background(colors.cardUnselectedBg)
                         ) {
-                            // Espacio para la imagen del alimento (Placeholder visual)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(105.dp)
-                                    .background(Color.DarkGray),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "[ Imagen ]",
-                                    color = Color.LightGray,
-                                    fontSize = 10.sp
-                                )
-
-                                // Indicador de check si está seleccionado
-                                if (isSelected) {
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .padding(6.dp)
-                                            .size(22.dp)
-                                            .clip(RoundedCornerShape(11.dp))
-                                            .background(selectedBorder),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(text = "✓", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                    }
+                            Image(
+                                painter = painterResource(id = imagen),
+                                contentDescription = nombreCorto(food),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            if (isSelected) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(6.dp)
+                                        .size(24.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(colors.warning),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "✓",
+                                        color = colors.buttonPrimaryText,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
+                        }
 
-                            // Texto del nombre del alimento
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = food.name,
-                                    color = Color.White,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 2
-                                )
-                            }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .padding(horizontal = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = nombreCorto(food),
+                                color = colors.textPrimary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
                 }
             }
 
-            // Sección inferior: Progreso y Botón de Confirmación
+            // Progreso de la bandeja y botón de confirmación
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = "TU PLATO", color = Color.Gray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Text(text = "${selectedItems.size}/3 seleccionados", color = accentGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "TU BANDEJA",
+                        color = colors.textSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Bandeja ${bandeja.size}/${ReglasJuego.MAX_ALIMENTOS}",
+                        color = colors.success,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Barra de progreso personalizada
                 LinearProgressIndicator(
-                    progress = { selectedItems.size / 3f },
+                    progress = { bandeja.size / ReglasJuego.MAX_ALIMENTOS.toFloat() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp)),
-                    color = accentGreen,
-                    trackColor = Color(0xFF162523),
+                    color = colors.success,
+                    trackColor = colors.cardBg,
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Botón Confirmar Menú
-                Button(
-                    onClick = onConfirmMenu,
-                    colors = ButtonDefaults.buttonColors(containerColor = accentGreen),
+                PrimaryButton(
+                    text = "CONFIRMAR MENÚ",
+                    onClick = viewModel::confirmarBandeja,
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                ) {
-                    Text(
-                        text = "CONFIRMAR MENÚ",
-                        color = Color(0xFF0F1B1A),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                    minHeight = 52.dp,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-private fun LunchTimeScreenPreview() {
-    GuerraDePlatillosTheme {
-        LunchTimeScreen(onConfirmMenu = {}, onBack = {})
     }
 }

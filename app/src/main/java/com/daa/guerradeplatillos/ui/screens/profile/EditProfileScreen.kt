@@ -1,16 +1,24 @@
 package com.daa.guerradeplatillos.ui.screens.profile
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -19,12 +27,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -36,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.daa.guerradeplatillos.R
 import com.daa.guerradeplatillos.model.Avatar
+import com.daa.guerradeplatillos.model.AvatarCatalog
 import com.daa.guerradeplatillos.ui.components.AppTextField
 import com.daa.guerradeplatillos.ui.components.CircleIconButton
 import com.daa.guerradeplatillos.ui.components.PrimaryButton
@@ -68,6 +81,7 @@ fun EditProfileScreen(
     var nombre by rememberSaveable { mutableStateOf("") }
     var edad by rememberSaveable { mutableStateOf("") }
     var esMasculino by rememberSaveable { mutableStateOf(true) }
+    var selectedAvatarId by rememberSaveable { mutableIntStateOf(Avatar.DEFAULT_AVATAR_ID) }
     var precargado by rememberSaveable { mutableStateOf(false) }
 
     // Precarga de los datos guardados o del apodo traído de Firestore (una sola vez)
@@ -78,6 +92,7 @@ fun EditProfileScreen(
                 nombre = a.nombre
                 if (a.edad > 0) edad = a.edad.toString()
                 esMasculino = a.sexo != Avatar.SEXO_FEMENINO
+                selectedAvatarId = a.avatarId
                 precargado = true
             } else if (apodoRemoto.isNotBlank()) {
                 nombre = apodoRemoto
@@ -131,19 +146,49 @@ fun EditProfileScreen(
                 modifier = Modifier.padding(top = 4.dp)
             )
 
-            // Vista previa del avatar (TODO: imagen elegida de AvatarCatalog)
-            CircleIconButton(
-                icon = R.drawable.ic_person,
+            // Vista previa del avatar seleccionado + selector de imágenes
+            val selectedAvatarDrawable = AvatarCatalog.byId(selectedAvatarId)?.drawable
+                ?: AvatarCatalog.all.first().drawable
+            Image(
+                painter = painterResource(selectedAvatarDrawable),
                 contentDescription = stringResource(R.string.desc_avatar_seleccionado),
-                onClick = {},
-                size = 110.dp,
-                iconPadding = 20.dp,
-                tint = colors.success,
-                playSound = false,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(top = 20.dp)
+                    .size(110.dp)
+                    .clip(CircleShape)
+                    .border(3.dp, colors.success, CircleShape)
             )
+
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+                contentPadding = PaddingValues(horizontal = 4.dp)
+            ) {
+                items(AvatarCatalog.all, key = { it.id }) { item ->
+                    val isSelected = item.id == selectedAvatarId
+                    Image(
+                        painter = painterResource(item.drawable),
+                        contentDescription = stringResource(R.string.desc_avatar_seleccionado),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .border(
+                                width = if (isSelected) 3.dp else 1.dp,
+                                color = if (isSelected) colors.success else colors.cardBorder,
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                SoundManager.playBubbly()
+                                selectedAvatarId = item.id
+                            }
+                    )
+                }
+            }
 
             // Nombre
             FieldLabel(stringResource(R.string.label_nombre_avatar), Modifier.padding(top = 20.dp))
@@ -212,7 +257,7 @@ fun EditProfileScreen(
                 shape = RoundedCornerShape(28.dp),
                 minHeight = 54.dp,
                 onClick = {
-                    if (viewModel.guardarPerfil(nombre, edad, esMasculino)) {
+                    if (viewModel.guardarPerfil(nombre, edad, esMasculino, selectedAvatarId)) {
                         SoundManager.playBubbly()
                         val msgRes = if (isEditMode) R.string.msg_datos_actualizados else R.string.msg_perfil_creado
                         Toast.makeText(context, msgRes, Toast.LENGTH_SHORT).show()

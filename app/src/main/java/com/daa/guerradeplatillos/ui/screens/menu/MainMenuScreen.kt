@@ -1,5 +1,7 @@
 package com.daa.guerradeplatillos.ui.screens.menu
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,7 +43,7 @@ import com.daa.guerradeplatillos.ui.theme.AppTheme
 import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
 
 /**
- * Pantalla de Menú Principal con los dos minijuegos, Perfil, Ranking y Cerrar sesión.
+ * Pantalla de Menú Principal con los dos minijuegos, Perfil y Ranking.
  */
 @Composable
 fun MainMenuScreen(
@@ -55,20 +59,13 @@ fun MainMenuScreen(
 
     ScreenContainer {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header: volver + título + ruedita de opciones
+            // Header: volver + ruedita de opciones
             Box(modifier = Modifier.fillMaxWidth()) {
                 CircleIconButton(
                     icon = R.drawable.ic_arrow_back,
                     contentDescription = stringResource(R.string.btn_back_description),
                     onClick = onBack,
                     modifier = Modifier.align(Alignment.CenterStart)
-                )
-                Text(
-                    text = stringResource(R.string.main_menu_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontSize = 18.sp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.align(Alignment.Center)
                 )
                 CircleIconButton(
                     icon = R.drawable.ic_settings,
@@ -90,7 +87,7 @@ fun MainMenuScreen(
                 // Títulos superiores
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = stringResource(R.string.app_name),
+                        text = "Código Verde",
                         style = MaterialTheme.typography.headlineMedium,
                         color = colors.textHighlight,
                         textAlign = TextAlign.Center,
@@ -116,6 +113,7 @@ fun MainMenuScreen(
                         title = "LUNCH TIME",
                         description = "Armá tu menú saludable.",
                         buttonText = "¡JUGAR! ▷",
+                        coverRes = R.drawable.portada,
                         onPlayClick = onPlayGame1Click
                     )
 
@@ -123,13 +121,14 @@ fun MainMenuScreen(
                         title = "GUERRA DE PLATILLOS",
                         description = "Desafío Máximo",
                         buttonText = "¡JUGAR! ▷",
+                        coverRes = R.drawable.img_guerra_de_platillos_cover,
                         onPlayClick = onPlayGame2Click
                     )
                 }
 
                 Spacer(Modifier.height(8.dp))
 
-                // Botones inferiores de Perfil, Ranking y Cerrar sesión
+                // Botones inferiores de Perfil y Ranking
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -139,7 +138,7 @@ fun MainMenuScreen(
                         onClick = onProfileClick,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(46.dp)
+                            .height(48.dp)
                     )
 
                     SecondaryButton(
@@ -147,15 +146,7 @@ fun MainMenuScreen(
                         onClick = onRankingClick,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(46.dp)
-                    )
-
-                    SecondaryButton(
-                        text = "Cerrar sesión",
-                        onClick = onLogoutClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(44.dp)
+                            .height(48.dp)
                     )
                 }
             }
@@ -168,10 +159,11 @@ fun GameCardItem(
     title: String,
     description: String,
     buttonText: String,
+    @DrawableRes coverRes: Int? = null,
     onPlayClick: () -> Unit
 ) {
-    val cardBg = Color(0xFF162523)
-    val accentGreen = Color(0xFFA5D6A7)
+    val cardBg = AppTheme.colors.cardBg
+    val accentGreen = AppTheme.colors.success
 
     Box(
         modifier = Modifier
@@ -191,8 +183,17 @@ fun GameCardItem(
                 modifier = Modifier
                     .size(85.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color.DarkGray)
-            )
+                    .background(AppTheme.colors.cardUnselectedBg)
+            ) {
+                if (coverRes != null) {
+                    Image(
+                        painter = painterResource(id = coverRes),
+                        contentDescription = title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
 
@@ -211,7 +212,7 @@ fun GameCardItem(
                 )
                 Text(
                     text = description,
-                    color = Color.LightGray,
+                    color = AppTheme.colors.textSecondary,
                     fontSize = 11.sp
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -224,7 +225,7 @@ fun GameCardItem(
                 ) {
                     Text(
                         text = buttonText,
-                        color = Color(0xFF0F1B1A),
+                        color = AppTheme.colors.buttonPrimaryText,
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp
                     )
