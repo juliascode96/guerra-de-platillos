@@ -170,8 +170,8 @@ fun GameCardItem(
     buttonText: String,
     onPlayClick: () -> Unit
 ) {
-    val cardBg = Color(0xFF162523)
-    val accentGreen = Color(0xFFA5D6A7)
+    val cardBg = AppTheme.colors.cardBg
+    val accentGreen = AppTheme.colors.success
 
     Box(
         modifier = Modifier
@@ -191,7 +191,7 @@ fun GameCardItem(
                 modifier = Modifier
                     .size(85.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color.DarkGray)
+                    .background(AppTheme.colors.cardUnselectedBg)
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -211,7 +211,7 @@ fun GameCardItem(
                 )
                 Text(
                     text = description,
-                    color = Color.LightGray,
+                    color = AppTheme.colors.textSecondary,
                     fontSize = 11.sp
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -224,7 +224,7 @@ fun GameCardItem(
                 ) {
                     Text(
                         text = buttonText,
-                        color = Color(0xFF0F1B1A),
+                        color = AppTheme.colors.buttonPrimaryText,
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp
                     )

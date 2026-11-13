@@ -2,19 +2,33 @@ package com.daa.guerradeplatillos.ui.screens.game
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.daa.guerradeplatillos.R
+import com.daa.guerradeplatillos.ui.components.CircleIconButton
+import com.daa.guerradeplatillos.ui.components.PrimaryButton
 import com.daa.guerradeplatillos.ui.components.ScreenContainer
+import com.daa.guerradeplatillos.ui.theme.AppTheme
 import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
 
 @Composable
@@ -22,33 +36,32 @@ fun OpcionLunchTimeScreen(
     onConfirmClick: () -> Unit,
     onBack: () -> Unit
 ) {
-    val cardBg = Color(0xFF162523)
-    val accentGreen = Color(0xFFA5D6A7)
+    val colors = AppTheme.colors
 
     ScreenContainer {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 // Botón Volver
-                IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
-                    Text(text = "‹", color = accentGreen, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                }
+                CircleIconButton(
+                    icon = R.drawable.ic_arrow_back,
+                    contentDescription = stringResource(R.string.btn_back_description),
+                    onClick = onBack,
+                )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
                     text = "JUEGO: ARMA TU MENÚ",
-                    color = accentGreen,
+                    color = colors.textHighlight,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "¿Cómo querés elegir tu comida hoy?",
-                    color = Color.LightGray,
+                    color = colors.textSecondary,
                     fontSize = 14.sp
                 )
 
@@ -59,8 +72,8 @@ fun OpcionLunchTimeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(cardBg)
-                        .border(1.dp, accentGreen, RoundedCornerShape(16.dp))
+                        .background(colors.cardBg)
+                        .border(1.dp, colors.success, RoundedCornerShape(16.dp))
                         .padding(16.dp)
                 ) {
                     Column {
@@ -71,7 +84,7 @@ fun OpcionLunchTimeScreen(
                         ) {
                             Text(
                                 text = "⏰ AUTOMÁTICO",
-                                color = accentGreen,
+                                color = colors.success,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp
                             )
@@ -79,16 +92,21 @@ fun OpcionLunchTimeScreen(
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(accentGreen),
+                                    .background(colors.success),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "✓", color = Color(0xFF0F1B1A), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "✓",
+                                    color = colors.buttonPrimaryText,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "La app elige según la hora del día para que juegues con lo que te toca comer ahora.",
-                            color = Color.LightGray,
+                            color = colors.textSecondary,
                             fontSize = 12.sp
                         )
                         Spacer(modifier = Modifier.height(12.dp))
@@ -96,7 +114,7 @@ fun OpcionLunchTimeScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF0F1B1A))
+                                .background(colors.cardUnselectedBg)
                                 .padding(10.dp)
                         ) {
                             Column {
@@ -104,13 +122,23 @@ fun OpcionLunchTimeScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(text = "HORARIOS DEL MENÚ", color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                    Text(text = "ACTUAL: ALMUERZO", color = accentGreen, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        text = "HORARIOS DEL MENÚ",
+                                        color = colors.textSecondary,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "ACTUAL: ALMUERZO",
+                                        color = colors.success,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = "Desayuno 6-10hs • Almuerzo 12-14hs • Merienda 15-18hs • Cena 19-21hs",
-                                    color = Color.LightGray,
+                                    color = colors.textPrimary,
                                     fontSize = 10.sp
                                 )
                             }
@@ -125,8 +153,8 @@ fun OpcionLunchTimeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(cardBg)
-                        .border(1.dp, Color(0xFF1E3330), RoundedCornerShape(16.dp))
+                        .background(colors.cardBg)
+                        .border(1.dp, colors.cardBorder, RoundedCornerShape(16.dp))
                         .padding(16.dp)
                 ) {
                     Column {
@@ -137,7 +165,7 @@ fun OpcionLunchTimeScreen(
                         ) {
                             Text(
                                 text = "🍽️ YO ELIJO",
-                                color = Color.White,
+                                color = colors.textPrimary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp
                             )
@@ -145,13 +173,13 @@ fun OpcionLunchTimeScreen(
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clip(RoundedCornerShape(12.dp))
-                                    .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
+                                    .border(1.dp, colors.textSecondary, RoundedCornerShape(12.dp))
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Elegí vos mismo qué comida armar y descubrí opciones saludables.",
-                            color = Color.LightGray,
+                            color = colors.textSecondary,
                             fontSize = 12.sp
                         )
                     }
@@ -164,7 +192,7 @@ fun OpcionLunchTimeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(cardBg)
+                        .background(colors.cardBg)
                         .padding(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -172,7 +200,7 @@ fun OpcionLunchTimeScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Sabías que comer variado ayuda a tener más energía para jugar, estudiar y hacer deportes? ¡Sumá puntos verdes!",
-                            color = Color.LightGray,
+                            color = colors.textSecondary,
                             fontSize = 11.sp
                         )
                     }
@@ -180,21 +208,13 @@ fun OpcionLunchTimeScreen(
             }
 
             // Botón inferior de confirmación
-            Button(
+            PrimaryButton(
+                text = "CONFIRMAR Y EMPEZAR",
                 onClick = onConfirmClick,
-                colors = ButtonDefaults.buttonColors(containerColor = accentGreen),
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp)
-            ) {
-                Text(
-                    text = "CONFIRMAR Y EMPEZAR",
-                    color = Color(0xFF0F1B1A),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                minHeight = 54.dp,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

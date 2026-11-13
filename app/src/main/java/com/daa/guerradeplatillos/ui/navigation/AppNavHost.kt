@@ -1,17 +1,19 @@
-package com.daa.guerradeplatillos.ui.navigation
+﻿package com.daa.guerradeplatillos.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.daa.guerradeplatillos.GuerraDePlatillosApp
 import com.daa.guerradeplatillos.ui.screens.auth.AuthScreen
 import com.daa.guerradeplatillos.ui.screens.game.GameOverScreen
-import com.daa.guerradeplatillos.ui.screens.game.GameScreen
+import com.daa.guerradeplatillos.ui.screens.game.GuerraPlatillosScreen
 import com.daa.guerradeplatillos.ui.screens.game.InicioGuerraPlatillosScreen
 import com.daa.guerradeplatillos.ui.screens.game.InicioLunchTimeScreen
 import com.daa.guerradeplatillos.ui.screens.game.LunchTimeScreen
@@ -24,7 +26,7 @@ import com.daa.guerradeplatillos.ui.screens.ranking.RankingScreen
 import com.daa.guerradeplatillos.ui.screens.settings.SettingsScreen
 import com.daa.guerradeplatillos.util.SoundManager
 
-/** Rutas de navegación de la app. */
+/** Rutas de navegaciÃ³n de la app. */
 object Routes {
     const val HOME = "home"
     const val AUTH = "auth"
@@ -94,7 +96,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 2. Creación de nuevo usuario / avatar
+        // 2. CreaciÃ³n de nuevo usuario / avatar
         composable(Routes.CREATE_USER) {
             EditProfileScreen(
                 isEditMode = false,
@@ -109,7 +111,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 3. Menú principal
+        // 3. MenÃº principal
         composable(Routes.MAIN_MENU) {
             MainMenuScreen(
                 onPlayGame1Click = {
@@ -117,7 +119,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                     navController.navigateSingleTop(Routes.INICIO_LUNCH_TIME)
                 },
                 onPlayGame2Click = {
-                    // Minijuego 2: Guerra de Platillos (Pantalla de inicio / presentación)
+                    // Minijuego 2: Guerra de Platillos (Pantalla de inicio / presentaciÃ³n)
                     navController.navigateSingleTop(Routes.INICIO_GUERRA_PLATILLOS)
                 },
                 onProfileClick = { navController.navigateSingleTop(Routes.PROFILE) },
@@ -134,7 +136,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 4. Pantalla de inicio / presentación de Lunch Time
+        // 4. Pantalla de inicio / presentaciÃ³n de Lunch Time
         composable(Routes.INICIO_LUNCH_TIME) {
             InicioLunchTimeScreen(
                 onStartGameClick = {
@@ -145,7 +147,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 5. Pantalla de Opciones de Lunch Time (Automático / Yo Elijo)
+        // 5. Pantalla de Opciones de Lunch Time (AutomÃ¡tico / Yo Elijo)
         composable(Routes.OPCION_LUNCH_TIME) {
             OpcionLunchTimeScreen(
                 onConfirmClick = {
@@ -156,7 +158,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 6. Pantalla interactiva del juego Lunch Time (Selección de alimentos)
+        // 6. Pantalla interactiva del juego Lunch Time (SelecciÃ³n de alimentos)
         composable(Routes.LUNCH_TIME_GAME) {
             LunchTimeScreen(
                 onConfirmMenu = {
@@ -170,12 +172,12 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 7. Pantalla de inicio / presentación de Guerra de Platillos
+        // 7. Pantalla de inicio / presentaciÃ³n de Guerra de Platillos
         composable(Routes.INICIO_GUERRA_PLATILLOS) {
             InicioGuerraPlatillosScreen(
                 onStartGameClick = {
                     SoundManager.playStartGame()
-                    // Al presionar ¡JUGAR! pasa al juego principal de Guerra de Platillos
+                    // Al presionar Â¡JUGAR! pasa al juego principal de Guerra de Platillos
                     navController.navigateSingleTop(Routes.GAME)
                 },
                 onBack = { navController.popBackStack() }
@@ -184,11 +186,11 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
 
         // 8. Pantalla de juego principal (Guerra de Platillos)
         composable(Routes.GAME) {
-            GameScreen(
+            GuerraPlatillosScreen(
                 onBack = { navController.popBackStack() },
-                onFinishGame = {
+                onFinishGame = { playerScore, rivalScore ->
                     SoundManager.playGameFinish()
-                    navController.navigate(Routes.GAME_OVER) {
+                    navController.navigate("${Routes.GAME_OVER}?playerScore=$playerScore&rivalScore=$rivalScore") {
                         popUpTo(Routes.GAME) { inclusive = true }
                         launchSingleTop = true
                     }
@@ -198,12 +200,26 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         // 9. Pantalla de fin de juego / resultados
-        composable(Routes.GAME_OVER) {
+        composable(
+            route = "${Routes.GAME_OVER}?playerScore={playerScore}&rivalScore={rivalScore}",
+            arguments = listOf(
+                navArgument("playerScore") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                },
+                navArgument("rivalScore") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                },
+            ),
+        ) { backStackEntry ->
+            val pScore = backStackEntry.arguments?.getInt("playerScore")?.takeIf { it >= 0 }
+            val rScore = backStackEntry.arguments?.getInt("rivalScore")?.takeIf { it >= 0 }
             GameOverScreen(
                 onPlayAgain = {
                     SoundManager.playStartGame()
-                    navController.navigate(Routes.MAIN_MENU) {
-                        popUpTo(Routes.GAME_OVER) { inclusive = true }
+                    navController.navigate(Routes.GAME) {
+                        popUpTo("${Routes.GAME_OVER}?playerScore={playerScore}&rivalScore={rivalScore}") { inclusive = true }
                         launchSingleTop = true
                     }
                 },
@@ -211,9 +227,10 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                     navController.popBackStack(Routes.MAIN_MENU, inclusive = false)
                 },
                 onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
+                playerScore = pScore,
+                rivalScore = rScore,
             )
         }
-
         // 10. Pantalla de Ranking
         composable(Routes.RANKING) {
             RankingScreen(
@@ -222,7 +239,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 11. Configuración (opciones)
+        // 11. ConfiguraciÃ³n (opciones)
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 onClose = { navController.popBackStack() },
@@ -249,7 +266,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 13. Edición de perfil existente
+        // 13. EdiciÃ³n de perfil existente
         composable(Routes.EDIT_PROFILE) {
             EditProfileScreen(
                 isEditMode = true,

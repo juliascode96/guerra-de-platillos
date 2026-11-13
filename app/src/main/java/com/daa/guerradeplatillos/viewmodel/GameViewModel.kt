@@ -1,8 +1,13 @@
 package com.daa.guerradeplatillos.viewmodel
 
 import android.app.Application
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.daa.guerradeplatillos.model.CardModel
 import com.daa.guerradeplatillos.sensors.ShakeDetector
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 
 sealed interface GameUiEvent {
     data object ShowShakeToast : GameUiEvent
@@ -19,28 +25,40 @@ data class GameUiState(
     val isListening: Boolean = false
 )
 
+enum class RoundWinner {
+    PLAYER,
+    RIVAL,
+    TIE,
+}
+
+data class RoundResult(
+    val roundNumber: Int,
+    val winner: RoundWinner,
+    val playerPointsGained: Int,
+    val rivalPointsGained: Int,
+    val playerCategoriesWon: Int,
+    val rivalCategoriesWon: Int,
+)
+
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
+    // --- LÓGICA DE SENSORES ---
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
-    // Canal para notificar eventos de un solo disparo (como Toasts o Navegación) a la View
     private val _uiEvent = Channel<GameUiEvent>()
     val uiEvent = _uiEvent.receiveAsFlow()
 
-    // Inicializamos el detector. Al agitar, se ejecuta esta lógica.
     private val shakeDetector = ShakeDetector(application) {
         onPhoneShaken()
     }
 
     private fun onPhoneShaken() {
         viewModelScope.launch {
-            // Enviamos el evento para que la View pinte el Toast
             _uiEvent.send(GameUiEvent.ShowShakeToast)
         }
     }
 
-    // Métodos para que la View controle los sensores según su ciclo de vida
     fun startSensors() {
         shakeDetector.startListening()
     }
@@ -51,6 +69,157 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         super.onCleared()
-        shakeDetector.stopListening() // Limpieza definitiva de recursos
+        shakeDetector.stopListening()
+    }
+
+    // --- LÓGICA DE GUERRA DE PLATILLOS ---
+    private val fullDeck: List<CardModel> = loadDeckFromAssets(application)
+
+    var playerHand by mutableStateOf(listOf<CardModel>())
+        private set
+    var rivalHand by mutableStateOf(listOf<CardModel>())
+        private set
+
+    var selectedCard by mutableStateOf<CardModel?>(null)
+        private set
+    var playerPlayedCard by mutableStateOf<CardModel?>(null)
+        private set
+    var rivalPlayedCard by mutableStateOf<CardModel?>(null)
+        private set
+
+    var playerScore by mutableIntStateOf(0)
+        private set
+    var rivalScore by mutableIntStateOf(0)
+        private set
+    var roundsPlayed by mutableIntStateOf(0)
+        private set
+    var lastRoundResult by mutableStateOf<RoundResult?>(null)
+        private set
+
+    val totalRounds: Int = CARDS_PER_PLAYER
+    val isGameFinished: Boolean
+        get() = roundsPlayed >= totalRounds || playerHand.isEmpty()
+
+    init {
+        startNewGame()
+    }
+
+    fun startNewGame() {
+        val shuffled = fullDeck.shuffled()
+        playerHand = shuffled.take(CARDS_PER_PLAYER)
+        rivalHand = shuffled.drop(CARDS_PER_PLAYER).take(CARDS_PER_PLAYER)
+
+        selectedCard = null
+        playerPlayedCard = null
+        rivalPlayedCard = null
+        playerScore = 0
+        rivalScore = 0
+        roundsPlayed = 0
+        lastRoundResult = null
+    }
+
+    fun selectCard(card: CardModel) {
+        if (isGameFinished) return
+        selectedCard = card
+    }
+
+    fun playTurn() {
+        if (isGameFinished) return
+        val chosen = selectedCard ?: return
+        val rivalChoice = rivalHand.randomOrNull() ?: return
+
+        playerHand = playerHand - chosen
+        rivalHand = rivalHand - rivalChoice
+        playerPlayedCard = chosen
+        rivalPlayedCard = rivalChoice
+        selectedCard = null
+
+        val result = evaluateRound(
+            roundNumber = roundsPlayed + 1,
+            playerCard = chosen,
+            rivalCard = rivalChoice,
+        )
+        playerScore += result.playerPointsGained
+        rivalScore += result.rivalPointsGained
+        roundsPlayed += 1
+        lastRoundResult = result
+    }
+
+    /**
+     * Compara energía, saciedad y vitalidad:
+     * - Quien gana más categorías (2 de 3, o las 3) gana la ronda y suma la diferencia
+     *   de puntos de las categorías que ganó.
+     * - Si hay empate en cantidad de categorías ganadas, ambos suman la diferencia de
+     *   la categoría que cada uno ganó.
+     */
+    private fun evaluateRound(
+        roundNumber: Int,
+        playerCard: CardModel,
+        rivalCard: CardModel,
+    ): RoundResult {
+        val comparisons = listOf(
+            playerCard.energyPoints to rivalCard.energyPoints,
+            playerCard.satietyPoints to rivalCard.satietyPoints,
+            playerCard.vitalityPoints to rivalCard.vitalityPoints,
+        )
+
+        var playerWins = 0
+        var rivalWins = 0
+        var playerWinDiff = 0
+        var rivalWinDiff = 0
+
+        for ((playerVal, rivalVal) in comparisons) {
+            when {
+                playerVal > rivalVal -> {
+                    playerWins++
+                    playerWinDiff += (playerVal - rivalVal)
+                }
+                rivalVal > playerVal -> {
+                    rivalWins++
+                    rivalWinDiff += (rivalVal - playerVal)
+                }
+            }
+        }
+
+        val (winner, playerGain, rivalGain) = when {
+            playerWins > rivalWins -> Triple(RoundWinner.PLAYER, playerWinDiff, 0)
+            rivalWins > playerWins -> Triple(RoundWinner.RIVAL, 0, rivalWinDiff)
+            else -> Triple(RoundWinner.TIE, playerWinDiff, rivalWinDiff)
+        }
+
+        return RoundResult(
+            roundNumber = roundNumber,
+            winner = winner,
+            playerPointsGained = playerGain,
+            rivalPointsGained = rivalGain,
+            playerCategoriesWon = playerWins,
+            rivalCategoriesWon = rivalWins,
+        )
+    }
+
+    private fun loadDeckFromAssets(application: Application): List<CardModel> {
+        return try {
+            val jsonText = application.assets.open(DECK_ASSET_FILE)
+                .bufferedReader()
+                .use { it.readText() }
+            val jsonArray = JSONArray(jsonText)
+            List(jsonArray.length()) { index ->
+                val obj = jsonArray.getJSONObject(index)
+                CardModel(
+                    id = obj.getString("id"),
+                    name = obj.getString("nombre"),
+                    energyPoints = obj.getInt("energia"),
+                    satietyPoints = obj.getInt("saciedad"),
+                    vitalityPoints = obj.getInt("vitalidad"),
+                )
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    companion object {
+        const val CARDS_PER_PLAYER = 3
+        private const val DECK_ASSET_FILE = "cartas.json"
     }
 }

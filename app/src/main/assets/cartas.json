@@ -1,0 +1,128 @@
+[
+  {
+    "id": "merluza_con_pure",
+    "nombre": "Merluza con puré",
+    "energia": 70,
+    "saciedad": 80,
+    "vitalidad": 85
+  },
+  {
+    "id": "ravioles",
+    "nombre": "Ravioles",
+    "energia": 100,
+    "saciedad": 85,
+    "vitalidad": 5
+  },
+  {
+    "id": "pancho",
+    "nombre": "Pancho",
+    "energia": 60,
+    "saciedad": 30,
+    "vitalidad": 15
+  },
+  {
+    "id": "avena",
+    "nombre": "Avena",
+    "energia": 80,
+    "saciedad": 95,
+    "vitalidad": 90
+  },
+  {
+    "id": "medialunas",
+    "nombre": "Medialunas",
+    "energia": 95,
+    "saciedad": 50,
+    "vitalidad": 15
+  },
+  {
+    "id": "licuado_verde",
+    "nombre": "Licuado verde",
+    "energia": 90,
+    "saciedad": 70,
+    "vitalidad": 95
+  },
+  {
+    "id": "frutillas_nueces",
+    "nombre": "Frutillas con nueces",
+    "energia": 80,
+    "saciedad": 40,
+    "vitalidad": 90
+  },
+  {
+    "id": "tostada_palta_huevo",
+    "nombre": "Tostada con palta y huevo",
+    "energia": 85,
+    "saciedad": 95,
+    "vitalidad": 95
+  },
+  {
+    "id": "alfajor",
+    "nombre": "Alfajor",
+    "energia": 10,
+    "saciedad": 15,
+    "vitalidad": 25
+  },
+  {
+    "id": "nuggets",
+    "nombre": "Nuggets",
+    "energia": 85,
+    "saciedad": 50,
+    "vitalidad": 10
+  },
+  {
+    "id": "sandwich_milanesa",
+    "nombre": "Sándwich de milanesa",
+    "energia": 100,
+    "saciedad": 85,
+    "vitalidad": 5
+  },
+  {
+    "id": "empanada_frita",
+    "nombre": "Empanada frita",
+    "energia": 20,
+    "saciedad": 85,
+    "vitalidad": 5
+  },
+  {
+    "id": "wok_lomo",
+    "nombre": "Wok de lomo",
+    "energia": 100,
+    "saciedad": 95,
+    "vitalidad": 110
+  },
+  {
+    "id": "galletitas",
+    "nombre": "Galletitas",
+    "energia": 10,
+    "saciedad": 20,
+    "vitalidad": 15
+  },
+  {
+    "id": "calabaza",
+    "nombre": "Calabaza",
+    "energia": 70,
+    "saciedad": 60,
+    "vitalidad": 85
+  },
+  {
+    "id": "banana_mani",
+    "nombre": "Banana con maní",
+    "energia": 50,
+    "saciedad": 80,
+    "vitalidad": 30
+  },
+  {
+    "id": "ensalada_garbanzo",
+    "nombre": "Ensalada de garbanzos",
+    "energia": 90,
+    "saciedad": 50,
+    "vitalidad": 100
+  },
+  {
+    "id": "churros",
+    "nombre": "Churros",
+    "energia": 50,
+    "saciedad": 90,
+    "vitalidad": 20
+  }
+]
