@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -223,6 +224,41 @@ class AuthRepository(
         }
     }
 
+    /**
+     * Obtiene las [limit] partidas con mayor puntaje donde ganó el jugador,
+     * ordenadas de mayor a menor `winnerScore`.
+     */
+    suspend fun obtenerTopRankings(limit: Int = 10): Result<List<RankingEntry>> {
+        return try {
+            val snapshot = firestore.collection(COLLECTION_MATCHES)
+                .orderBy(FIELD_MATCH_WINNER_SCORE, Query.Direction.DESCENDING)
+                .limit((limit * 3).toLong())
+                .get()
+                .await()
+
+            val currentUid = auth.currentUser?.uid
+            val entries = snapshot.documents
+                .filter { doc -> doc.getBoolean(FIELD_MATCH_WINNER) == true }
+                .take(limit)
+                .map { doc ->
+                    val score = doc.getDouble(FIELD_MATCH_WINNER_SCORE)?.toInt()
+                        ?: doc.getLong(FIELD_MATCH_WINNER_SCORE)?.toInt()
+                        ?: 0
+                    RankingEntry(
+                        id = doc.id,
+                        nickname = doc.getString(FIELD_MATCH_NICKNAME)?.takeIf { it.isNotBlank() } ?: "Jugador",
+                        score = score,
+                        timestampMillis = doc.getTimestamp(FIELD_MATCH_TIMESTAMP)?.toDate()?.time,
+                        isCurrentUser = currentUid != null && doc.getString(FIELD_MATCH_WINNER_USER_ID) == currentUid,
+                    )
+                }
+            Result.success(entries)
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error al obtener rankings", e)
+            Result.failure(e)
+        }
+    }
+
     /** Cierra la sesión actual de Firebase. */
     fun cerrarSesion() {
         auth.signOut()
@@ -257,3 +293,11 @@ class AuthRepository(
         private val USERNAME_REGEX = Regex("^[a-z0-9_.-]{3,20}$")
     }
 }
+
+data class RankingEntry(
+    val id: String,
+    val nickname: String,
+    val score: Int,
+    val timestampMillis: Long?,
+    val isCurrentUser: Boolean = false,
+)
