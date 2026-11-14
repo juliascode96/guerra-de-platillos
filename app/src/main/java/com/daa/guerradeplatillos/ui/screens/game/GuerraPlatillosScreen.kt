@@ -385,7 +385,7 @@ private fun RevealPromptBanner(onFallbackTap: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "📱 ¡Girá o agitá el celular para revelar las cartas!",
+            text = "¡Girá el celular o tocá acá para revelar las cartas!",
             color = colors.warning,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,

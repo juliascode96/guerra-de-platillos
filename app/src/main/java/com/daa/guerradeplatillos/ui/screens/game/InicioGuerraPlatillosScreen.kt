@@ -41,7 +41,8 @@ import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
 @Composable
 fun InicioGuerraPlatillosScreen(
     onStartGameClick: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSettingsClick: () -> Unit = {},
 ) {
     val app = LocalContext.current.applicationContext as? GuerraDePlatillosApp
     val highScore by (app?.userRepository?.highScore?.collectAsStateWithLifecycle()
@@ -55,6 +56,7 @@ fun InicioGuerraPlatillosScreen(
         highScore = highScore,
         onStartGameClick = onStartGameClick,
         onBack = onBack,
+        onSettingsClick = onSettingsClick,
     )
 }
 
@@ -63,6 +65,7 @@ private fun InicioGuerraPlatillosContent(
     highScore: Int,
     onStartGameClick: () -> Unit,
     onBack: () -> Unit,
+    onSettingsClick: () -> Unit = {},
 ) {
     val colors = AppTheme.colors
 
@@ -83,6 +86,12 @@ private fun InicioGuerraPlatillosContent(
                         contentDescription = stringResource(R.string.btn_back_description),
                         onClick = onBack,
                         modifier = Modifier.align(Alignment.CenterStart)
+                    )
+                    CircleIconButton(
+                        icon = R.drawable.ic_settings,
+                        contentDescription = stringResource(R.string.btn_settings_description),
+                        onClick = onSettingsClick,
+                        modifier = Modifier.align(Alignment.CenterEnd)
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -166,7 +175,7 @@ private fun InicioGuerraPlatillosContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Puntaje máximo",
+                    text = "Mejor puntaje",
                     color = colors.success,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold

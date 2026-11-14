@@ -35,7 +35,8 @@ import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
 @Composable
 fun InicioLunchTimeScreen(
     onStartGameClick: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSettingsClick: () -> Unit = {},
 ) {
     val colors = AppTheme.colors
 
@@ -55,6 +56,12 @@ fun InicioLunchTimeScreen(
                         contentDescription = stringResource(R.string.btn_back_description),
                         onClick = onBack,
                         modifier = Modifier.align(Alignment.CenterStart)
+                    )
+                    CircleIconButton(
+                        icon = R.drawable.ic_settings,
+                        contentDescription = stringResource(R.string.btn_settings_description),
+                        onClick = onSettingsClick,
+                        modifier = Modifier.align(Alignment.CenterEnd)
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))

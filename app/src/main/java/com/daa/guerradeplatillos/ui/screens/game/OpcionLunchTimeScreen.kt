@@ -48,7 +48,8 @@ import com.daa.guerradeplatillos.viewmodel.LunchTimeViewModel
 fun OpcionLunchTimeScreen(
     viewModel: LunchTimeViewModel,
     onStartGame: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSettingsClick: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val modoAutomatico by viewModel.modoAutomatico.collectAsStateWithLifecycle()
@@ -76,6 +77,7 @@ fun OpcionLunchTimeScreen(
         onComidaClick = viewModel::seleccionarComida,
         onConfirmClick = viewModel::confirmarSeleccionMenu,
         onBack = onBack,
+        onSettingsClick = onSettingsClick,
     )
 }
 
@@ -89,6 +91,7 @@ private fun OpcionLunchTimeContent(
     onComidaClick: (Comida) -> Unit,
     onConfirmClick: () -> Unit,
     onBack: () -> Unit,
+    onSettingsClick: () -> Unit = {},
 ) {
     val colors = AppTheme.colors
 
@@ -100,11 +103,20 @@ private fun OpcionLunchTimeContent(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                CircleIconButton(
-                    icon = R.drawable.ic_arrow_back,
-                    contentDescription = stringResource(R.string.btn_back_description),
-                    onClick = onBack,
-                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    CircleIconButton(
+                        icon = R.drawable.ic_arrow_back,
+                        contentDescription = stringResource(R.string.btn_back_description),
+                        onClick = onBack,
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    )
+                    CircleIconButton(
+                        icon = R.drawable.ic_settings,
+                        contentDescription = stringResource(R.string.btn_settings_description),
+                        onClick = onSettingsClick,
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 

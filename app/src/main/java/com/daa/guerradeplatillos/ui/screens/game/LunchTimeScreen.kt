@@ -70,7 +70,8 @@ private fun nombreCorto(alimento: Alimento): String =
 fun LunchTimeScreen(
     viewModel: LunchTimeViewModel,
     onFinish: () -> Unit,
-    onExit: () -> Unit
+    onExit: () -> Unit,
+    onSettingsClick: () -> Unit = {},
 ) {
     val colors = AppTheme.colors
     val context = LocalContext.current
@@ -147,7 +148,7 @@ fun LunchTimeScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .background(colors.cardBorder)
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Text(
                         text = "🕒 ${comida.horario}",
@@ -155,6 +156,12 @@ fun LunchTimeScreen(
                         fontSize = 11.sp
                     )
                 }
+
+                CircleIconButton(
+                    icon = R.drawable.ic_settings,
+                    contentDescription = stringResource(R.string.btn_settings_description),
+                    onClick = onSettingsClick,
+                )
             }
 
             Spacer(modifier = Modifier.height(14.dp))

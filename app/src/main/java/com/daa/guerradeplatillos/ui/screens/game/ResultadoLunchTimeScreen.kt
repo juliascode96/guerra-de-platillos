@@ -94,6 +94,12 @@ fun ResultadoLunchTimeScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 CircleIconButton(
+                    icon = R.drawable.ic_arrow_back,
+                    contentDescription = stringResource(R.string.btn_back_description),
+                    onClick = onBackToMenu,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                )
+                CircleIconButton(
                     icon = R.drawable.ic_settings,
                     contentDescription = stringResource(R.string.btn_settings_description),
                     onClick = onSettingsClick,

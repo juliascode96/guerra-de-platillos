@@ -144,6 +144,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         // 4. Pantalla de inicio / presentaciÃ³n de Lunch Time
         composable(Routes.INICIO_LUNCH_TIME) {
             InicioLunchTimeScreen(
+                onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
                 onStartGameClick = {
                     SoundManager.playStartGame()
                     navController.navigateSingleTop(Routes.OPCION_LUNCH_TIME)
@@ -155,6 +156,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         // 5. Pantalla de Opciones de Lunch Time (AutomÃ¡tico / Yo Elijo)
         composable(Routes.OPCION_LUNCH_TIME) {
             OpcionLunchTimeScreen(
+                onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
                 viewModel = lunchTimeViewModel,
                 onStartGame = {
                     SoundManager.playStartGame()
@@ -167,6 +169,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         // 6. Pantalla interactiva del juego Lunch Time (SelecciÃ³n de alimentos)
         composable(Routes.LUNCH_TIME_GAME) {
             LunchTimeScreen(
+                onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
                 viewModel = lunchTimeViewModel,
                 onFinish = {
                     SoundManager.playGameFinish()
@@ -200,6 +203,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
 
         composable(Routes.INICIO_GUERRA_PLATILLOS) {
             InicioGuerraPlatillosScreen(
+                onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
                 onStartGameClick = {
                     SoundManager.playStartGame()
                     // Al presionar Â¡JUGAR! pasa al juego principal de Guerra de Platillos
