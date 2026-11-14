@@ -242,29 +242,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    private fun loadDeckFromAssets(application: Application): List<CardModel> {
-        return try {
-            val jsonText = application.assets.open(DECK_ASSET_FILE)
-                .bufferedReader()
-                .use { it.readText() }
-            val jsonArray = JSONArray(jsonText)
-            List(jsonArray.length()) { index ->
-                val obj = jsonArray.getJSONObject(index)
-                CardModel(
-                    id = obj.getString("id"),
-                    name = obj.getString("nombre"),
-                    energyPoints = obj.getInt("energia"),
-                    satietyPoints = obj.getInt("saciedad"),
-                    vitalityPoints = obj.getInt("vitalidad"),
-                )
-            }
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
+    private fun loadDeckFromAssets(application: Application): List<CardModel> =
+        com.daa.guerradeplatillos.data.DeckRepository.cargarBaraja(application)
 
     companion object {
         const val CARDS_PER_PLAYER = 3
-        private const val DECK_ASSET_FILE = "cartas.json"
     }
 }

@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.daa.guerradeplatillos.GuerraDePlatillosApp
 import com.daa.guerradeplatillos.ui.screens.auth.AuthScreen
+import com.daa.guerradeplatillos.ui.screens.deck.DeckScreen
 import com.daa.guerradeplatillos.ui.screens.game.GameOverScreen
 import com.daa.guerradeplatillos.ui.screens.game.GuerraPlatillosScreen
 import com.daa.guerradeplatillos.ui.screens.game.InicioGuerraPlatillosScreen
@@ -51,6 +52,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val PROFILE = "profile"
     const val EDIT_PROFILE = "edit_profile"
+    const val DECK = "deck"
 }
 
 @Composable
@@ -293,10 +295,20 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                     }
                 },
                 onEditClick = { navController.navigateSingleTop(Routes.EDIT_PROFILE) },
+                onVerBarajaClick = { navController.navigateSingleTop(Routes.DECK) },
+                onRankingClick = { navController.navigateSingleTop(Routes.RANKING) },
             )
         }
 
         // 13. EdiciÃ³n de perfil existente
+        // 13b. Galería de baraja completa
+        composable(Routes.DECK) {
+            DeckScreen(
+                onBack = { navController.popBackStack() },
+                onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
+            )
+        }
+
         composable(Routes.EDIT_PROFILE) {
             EditProfileScreen(
                 isEditMode = true,

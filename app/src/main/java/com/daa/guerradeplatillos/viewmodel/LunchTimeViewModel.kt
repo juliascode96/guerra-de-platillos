@@ -3,6 +3,7 @@ package com.daa.guerradeplatillos.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.daa.guerradeplatillos.GuerraDePlatillosApp
 import com.daa.guerradeplatillos.data.AlimentoRepository
 import com.daa.guerradeplatillos.data.DatoCuriosoRepository
 import com.daa.guerradeplatillos.model.Alimento
@@ -11,7 +12,9 @@ import com.daa.guerradeplatillos.model.DatoCurioso
 import com.daa.guerradeplatillos.model.ReglasJuego
 import com.daa.guerradeplatillos.model.ResultadoPartida
 import com.daa.guerradeplatillos.util.SoundManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -234,6 +237,18 @@ class LunchTimeViewModel(application: Application) : AndroidViewModel(applicatio
             elegidos,
             DatoCuriosoRepository.cargarDatos(getApplication()),
         )
+        val app = getApplication<Application>() as? GuerraDePlatillosApp
+        val comidaTitulo = _comidaJuego.value.titulo
+        val nombresPlatos = elegidos.map { it.nombreCorto.ifEmpty { it.opcion } }
+        viewModelScope.launch(Dispatchers.IO + NonCancellable) {
+            app?.lunchTimeHistoryRepository?.registrarPartida(
+                comida = comidaTitulo,
+                salud = salud,
+                saciedad = saciedad,
+                vitalidad = vitalidad,
+                nombresPlatos = nombresPlatos,
+            )
+        }
         _eventos.trySend(LunchTimeEvent.IrAlResultado)
     }
 

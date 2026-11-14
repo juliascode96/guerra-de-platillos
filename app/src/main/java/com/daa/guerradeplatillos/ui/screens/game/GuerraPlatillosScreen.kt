@@ -568,7 +568,7 @@ private fun AbbrevStat(
 }
 
 @Composable
-private fun CardDetailDialog(
+fun CardDetailDialog(
     card: CardModel,
     onDismiss: () -> Unit,
 ) {

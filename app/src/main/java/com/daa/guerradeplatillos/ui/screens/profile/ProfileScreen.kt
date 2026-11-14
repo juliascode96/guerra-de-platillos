@@ -1,8 +1,10 @@
 package com.daa.guerradeplatillos.ui.screens.profile
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,16 +20,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,41 +42,80 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.window.Dialog
 import com.daa.guerradeplatillos.R
+import com.daa.guerradeplatillos.data.DiaSemanaEstado
+import com.daa.guerradeplatillos.data.EstadisticasJugador
+import com.daa.guerradeplatillos.data.NivelDia
+import com.daa.guerradeplatillos.data.ResumenLunchTimeUsuario
+import com.daa.guerradeplatillos.data.local.PartidaConPlatos
 import com.daa.guerradeplatillos.model.Avatar
 import com.daa.guerradeplatillos.model.AvatarCatalog
+import com.daa.guerradeplatillos.model.DatoCurioso
 import com.daa.guerradeplatillos.ui.components.BorderCard
 import com.daa.guerradeplatillos.ui.components.CircleIconButton
 import com.daa.guerradeplatillos.ui.components.PrimaryButton
 import com.daa.guerradeplatillos.ui.components.ScreenContainer
-import com.daa.guerradeplatillos.ui.components.TagChip
 import com.daa.guerradeplatillos.ui.theme.AppTheme
 import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
+import com.daa.guerradeplatillos.util.SoundManager
 import com.daa.guerradeplatillos.viewmodel.ProfileViewModel
 
 /**
  * Pantalla de Perfil de usuario (equivalente a DetallesUsuario de Código Verde).
- * Las estadísticas, badges y días son contenido de ejemplo (placeholder).
+ * Racha y partidas ganadas se calculan desde Firestore (`matches`); el dato curioso
+ * se sortea de assets/datos_curiosos.json. "Días sin ultraprocesados" sigue siendo placeholder.
  */
 @Composable
 fun ProfileScreen(
     onBack: () -> Unit,
     onSettingsClick: () -> Unit,
     onEditClick: () -> Unit,
+    onVerBarajaClick: () -> Unit = {},
+    onRankingClick: () -> Unit = {},
     viewModel: ProfileViewModel = viewModel(),
 ) {
+    val context = LocalContext.current
     val avatar by viewModel.avatar.collectAsStateWithLifecycle()
-    ProfileContent(avatar, onBack, onSettingsClick, onEditClick)
+    val estadisticas by viewModel.estadisticas.collectAsStateWithLifecycle()
+    val datoCurioso by viewModel.datoCurioso.collectAsStateWithLifecycle()
+    val resumenLunchTime by viewModel.resumenLunchTime.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) { viewModel.cargarDatosPerfil() }
+
+    val proximamente = {
+        Toast.makeText(context, "Próximamente", Toast.LENGTH_SHORT).show()
+    }
+
+    ProfileContent(
+        avatar = avatar,
+        estadisticas = estadisticas,
+        resumenLunchTime = resumenLunchTime,
+        datoCurioso = datoCurioso,
+        onBack = onBack,
+        onSettingsClick = onSettingsClick,
+        onEditClick = onEditClick,
+        onVerBarajaClick = onVerBarajaClick,
+        onImprimirBarajaClick = proximamente,
+        onRankingClick = onRankingClick,
+    )
 }
 
 @Composable
 private fun ProfileContent(
     avatar: Avatar?,
+    estadisticas: EstadisticasJugador?,
+    resumenLunchTime: ResumenLunchTimeUsuario?,
+    datoCurioso: DatoCurioso?,
     onBack: () -> Unit,
     onSettingsClick: () -> Unit,
     onEditClick: () -> Unit,
+    onVerBarajaClick: () -> Unit,
+    onImprimirBarajaClick: () -> Unit,
+    onRankingClick: () -> Unit,
 ) {
     val colors = AppTheme.colors
+    var diaSeleccionado by remember { mutableStateOf<DiaSemanaEstado?>(null) }
 
     ScreenContainer {
         Column(
@@ -170,47 +214,16 @@ private fun ProfileContent(
                 )
             }
 
-            // Barra de experiencia (XP)
-            Column(modifier = Modifier.padding(top = 20.dp)) {
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 6.dp)) {
-                    Text(
-                        text = stringResource(R.string.profile_experience),
-                        color = colors.textSecondary,
-                        fontSize = 13.sp,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        text = stringResource(R.string.profile_xp_placeholder),
-                        color = colors.success,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                LinearProgressIndicator(
-                    progress = { 0.68f },
-                    color = colors.greenLight,
-                    trackColor = colors.cardBorder,
-                    strokeCap = StrokeCap.Round,
-                    gapSize = 0.dp,
-                    drawStopIndicator = {},
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                )
-            }
-
-            // Badges de logros rápidos
+            // Accesos rápidos
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp),
+                    .padding(top = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                TagChip(stringResource(R.string.profile_badge_1), colors.badgeGreenBg, colors.success, Modifier.weight(1f))
-                TagChip(stringResource(R.string.profile_badge_2), colors.badgeBlueBg, colors.textPrimary, Modifier.weight(1.2f))
-                TagChip(stringResource(R.string.profile_badge_3), colors.badgeOrangeBg, colors.textPrimary, Modifier.weight(1f))
+                ActionChip("🃏 Ver baraja", colors.badgeGreenBg, colors.success, onVerBarajaClick, Modifier.weight(1f))
+                ActionChip("🖨️ Imprimir baraja", colors.badgeBlueBg, colors.textPrimary, onImprimirBarajaClick, Modifier.weight(1.2f))
+                ActionChip("🏆 Ver ranking", colors.badgeOrangeBg, colors.textPrimary, onRankingClick, Modifier.weight(1f))
             }
 
             // Tarjetas de estadísticas
@@ -220,23 +233,24 @@ private fun ProfileContent(
                     .padding(top = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                StatCard("--", stringResource(R.string.profile_stat_1), colors.success, Modifier.weight(1f))
-                StatCard("--", stringResource(R.string.profile_stat_2), colors.textPrimary, Modifier.weight(1f))
-                StatCard("-", stringResource(R.string.profile_stat_3), colors.success, Modifier.weight(1f))
-            }
-
-            // Pestañas (Resumen / Registro / Logros) — estáticas por ahora
-            BorderCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(4.dp)
-            ) {
-                Row {
-                    TabItem(stringResource(R.string.profile_tab_summary), selected = true, Modifier.weight(1f))
-                    TabItem(stringResource(R.string.profile_tab_log), selected = false, Modifier.weight(1f))
-                    TabItem(stringResource(R.string.profile_tab_achievements), selected = false, Modifier.weight(1f))
-                }
+                StatCard(
+                    value = resumenLunchTime?.diasSinUltraprocesados?.toString() ?: "-",
+                    label = stringResource(R.string.profile_stat_1),
+                    valueColor = colors.success,
+                    modifier = Modifier.weight(1f)
+                )
+                StatCard(
+                    value = estadisticas?.rachaDias?.toString() ?: "-",
+                    label = stringResource(R.string.profile_stat_2),
+                    valueColor = colors.textPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+                StatCard(
+                    value = estadisticas?.partidasGanadas?.toString() ?: "-",
+                    label = stringResource(R.string.profile_stat_3),
+                    valueColor = colors.success,
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             // Días de la semana
@@ -252,29 +266,48 @@ private fun ProfileContent(
                     .fillMaxWidth()
                     .padding(top = 10.dp)
             ) {
-                val semana = listOf(
-                    "L" to colors.error, "M" to colors.success, "M" to colors.cardBorder,
-                    "J" to colors.success, "V" to colors.cardBorder, "S" to colors.success,
-                    "D" to colors.cardBorder,
-                )
-                semana.forEach { (dia, color) -> DayBox(dia, color, Modifier.weight(1f)) }
+                val dias = resumenLunchTime?.diasSemana?.takeIf { it.size == 7 } ?: run {
+                    val etiquetas = listOf("L", "M", "M", "J", "V", "S", "D")
+                    val hoy = java.time.LocalDate.now()
+                    etiquetas.mapIndexed { idx, label ->
+                        DiaSemanaEstado(
+                            fecha = hoy.plusDays(idx.toLong()),
+                            etiqueta = label,
+                            nivel = NivelDia.SIN_DATOS,
+                            partidas = emptyList(),
+                        )
+                    }
+                }
+                dias.forEach { dia ->
+                    val color = when (dia.nivel) {
+                        NivelDia.ROJO -> colors.error
+                        NivelDia.AMARILLO -> colors.warning
+                        NivelDia.VERDE -> colors.success
+                        NivelDia.SIN_DATOS -> colors.cardBorder
+                    }
+                    DayBox(
+                        day = dia.etiqueta,
+                        color = color,
+                        onClick = {
+                            SoundManager.playBubbly()
+                            diaSeleccionado = dia
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
 
-            // Bloques informativos
-            InfoCard(
-                emoji = "💡",
-                title = stringResource(R.string.profile_fact_title),
-                titleColor = colors.success,
-                body = stringResource(R.string.profile_fact_body),
-                modifier = Modifier.padding(top = 20.dp)
-            )
-            InfoCard(
-                emoji = "⚠️",
-                title = stringResource(R.string.profile_alert_title),
-                titleColor = colors.error,
-                body = stringResource(R.string.profile_alert_body),
-                modifier = Modifier.padding(top = 12.dp)
-            )
+            // ¿Sabías que...? (dato curioso al azar)
+            datoCurioso?.let { dato ->
+                InfoCard(
+                    emoji = "💡",
+                    title = stringResource(R.string.profile_fact_title),
+                    titleColor = colors.success,
+                    subtitle = dato.plato,
+                    body = dato.dato,
+                    modifier = Modifier.padding(top = 20.dp)
+                )
+            }
 
             // Botón Editar datos
             PrimaryButton(
@@ -288,6 +321,45 @@ private fun ProfileContent(
             )
             Spacer(Modifier.height(8.dp))
         }
+    }
+
+    diaSeleccionado?.let { dia ->
+        DiaDetalleDialog(
+            dia = dia,
+            onDismiss = { diaSeleccionado = null }
+        )
+    }
+}
+
+@Composable
+private fun ActionChip(
+    text: String,
+    background: Color,
+    textColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .height(44.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(background)
+            .clickable {
+                SoundManager.playBubbly()
+                onClick()
+            }
+            .padding(horizontal = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = textColor,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            lineHeight = 13.sp,
+            maxLines = 2
+        )
     }
 }
 
@@ -315,26 +387,16 @@ private fun StatCard(value: String, label: String, valueColor: Color, modifier: 
 }
 
 @Composable
-private fun TabItem(text: String, selected: Boolean, modifier: Modifier = Modifier) {
-    val colors = AppTheme.colors
-    Box(
-        modifier = modifier
-            .height(48.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (selected) colors.cardBorder else Color.Transparent),
-        contentAlignment = Alignment.Center
+private fun DayBox(
+    day: String,
+    color: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = text,
-            color = if (selected) colors.textPrimary else colors.textSecondary,
-            fontSize = 11.sp
-        )
-    }
-}
-
-@Composable
-private fun DayBox(day: String, color: Color, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
                 .size(38.dp)
@@ -350,18 +412,137 @@ private fun DayBox(day: String, color: Color, modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun DiaDetalleDialog(
+    dia: DiaSemanaEstado,
+    onDismiss: () -> Unit,
+) {
+    val colors = AppTheme.colors
+    val fechaFormateada = remember(dia.fecha) {
+        val formatter = java.time.format.DateTimeFormatter.ofPattern("EEEE dd/MM", java.util.Locale("es", "AR"))
+        dia.fecha.format(formatter).replaceFirstChar { it.uppercase() }
+    }
+    val horaFormatter = remember {
+        java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        BorderCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = fechaFormateada,
+                        color = colors.textHighlight,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    CircleIconButton(
+                        icon = R.drawable.ic_close,
+                        contentDescription = stringResource(R.string.btn_close_description),
+                        onClick = onDismiss,
+                    )
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                if (dia.partidas.isEmpty()) {
+                    Text(
+                        text = "No jugaste partidas de Lunch Time este día.",
+                        color = colors.textSecondary,
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(260.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        dia.partidas.forEach { item: PartidaConPlatos ->
+                            val p = item.partida
+                            val hora = horaFormatter.format(java.util.Date(p.timestampMs))
+                            val colorPuntaje = when {
+                                p.puntajeTotal < 6 -> colors.error
+                                p.puntajeTotal <= 12 -> colors.warning
+                                else -> colors.success
+                            }
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(colors.cardUnselectedBg)
+                                    .border(1.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                                    .padding(10.dp)
+                            ) {
+                                Text(
+                                    text = "${p.comida} · $hora hs",
+                                    color = colors.textSecondary,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = "${p.puntajeTotal} / 18 pts",
+                                    color = colorPuntaje,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    text = "Salud: ${p.salud}/6",
+                                    color = colors.textPrimary,
+                                    fontSize = 11.sp
+                                )
+                                Text(
+                                    text = "Saciedad: ${p.saciedad}/6",
+                                    color = colors.textPrimary,
+                                    fontSize = 11.sp
+                                )
+                                Text(
+                                    text = "Vitalidad: ${p.vitalidad}/6",
+                                    color = colors.textPrimary,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun InfoCard(
     emoji: String,
     title: String,
     titleColor: Color,
     body: String,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
 ) {
     BorderCard(modifier = modifier.fillMaxWidth()) {
         Row {
             Text(emoji, fontSize = 20.sp, modifier = Modifier.padding(end = 12.dp))
             Column {
                 Text(title, color = titleColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                subtitle?.let {
+                    Text(
+                        it,
+                        color = AppTheme.colors.textPrimary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
                 Text(
                     body,
                     color = AppTheme.colors.textPrimary,
@@ -380,7 +561,11 @@ private fun ProfilePreview() {
     GuerraDePlatillosTheme {
         ProfileContent(
             avatar = Avatar("Mateo", Avatar.SEXO_MASCULINO, 15),
-            onBack = {}, onSettingsClick = {}, onEditClick = {}
+            estadisticas = EstadisticasJugador(partidasGanadas = 7, rachaDias = 3),
+            resumenLunchTime = ResumenLunchTimeUsuario(diasSinUltraprocesados = 2),
+            datoCurioso = DatoCurioso("Yogur griego", "Aporta proteínas y calcio."),
+            onBack = {}, onSettingsClick = {}, onEditClick = {},
+            onVerBarajaClick = {}, onImprimirBarajaClick = {}, onRankingClick = {},
         )
     }
 }

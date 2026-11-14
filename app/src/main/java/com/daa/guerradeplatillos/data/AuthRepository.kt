@@ -259,6 +259,39 @@ class AuthRepository(
         }
     }
 
+    /**
+     * Calcula las estadísticas del jugador actual a partir de sus partidas en `matches`:
+     * - `partidasGanadas`: cantidad de partidas con `winner == true`.
+     * - `rachaDias`: días consecutivos (hasta hoy o ayer) en los que jugó al menos una partida.
+     */
+    suspend fun obtenerEstadisticasJugador(): Result<EstadisticasJugador> {
+        val uid = auth.currentUser?.uid ?: return Result.success(EstadisticasJugador())
+        return try {
+            val snapshot = firestore.collection(COLLECTION_MATCHES)
+                .whereEqualTo(FIELD_MATCH_USER_ID, uid)
+                .get()
+                .await()
+
+            val ganadas = snapshot.documents.count { it.getBoolean(FIELD_MATCH_WINNER) == true }
+
+            val zona = java.time.ZoneId.systemDefault()
+            val diasJugados = snapshot.documents
+                .mapNotNull { it.getTimestamp(FIELD_MATCH_TIMESTAMP)?.toDate()?.toInstant() }
+                .map { it.atZone(zona).toLocalDate() }
+                .toSet()
+
+            Result.success(
+                EstadisticasJugador(
+                    partidasGanadas = ganadas,
+                    rachaDias = calcularRacha(diasJugados, java.time.LocalDate.now(zona)),
+                )
+            )
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error al obtener estadísticas del jugador", e)
+            Result.failure(e)
+        }
+    }
+
     /** Cierra la sesión actual de Firebase. */
     fun cerrarSesion() {
         auth.signOut()
@@ -291,8 +324,32 @@ class AuthRepository(
 
         private const val SYNTHETIC_DOMAIN = "guerradeplatillos.app"
         private val USERNAME_REGEX = Regex("^[a-z0-9_.-]{3,20}$")
+
+        /**
+         * Días consecutivos con partidas jugadas, contando hacia atrás desde hoy.
+         * Si hoy todavía no jugó, la racha sigue viva si jugó ayer.
+         */
+        fun calcularRacha(diasJugados: Set<java.time.LocalDate>, hoy: java.time.LocalDate): Int {
+            var dia = when {
+                hoy in diasJugados -> hoy
+                hoy.minusDays(1) in diasJugados -> hoy.minusDays(1)
+                else -> return 0
+            }
+            var racha = 0
+            while (dia in diasJugados) {
+                racha++
+                dia = dia.minusDays(1)
+            }
+            return racha
+        }
     }
 }
+
+/** Estadísticas del jugador calculadas desde la colección `matches`. */
+data class EstadisticasJugador(
+    val partidasGanadas: Int = 0,
+    val rachaDias: Int = 0,
+)
 
 data class RankingEntry(
     val id: String,
