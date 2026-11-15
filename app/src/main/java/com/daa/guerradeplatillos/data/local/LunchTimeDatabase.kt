@@ -14,6 +14,8 @@ import androidx.room.Relation
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 /** Partida jugada en Lunch Time almacenada en SQLite vía Room. */
 @Entity(
@@ -107,16 +109,61 @@ interface LunchTimeDao {
 }
 
 @Database(
-    entities = [LunchTimePartidaEntity::class, LunchTimePlatoEntity::class],
-    version = 1,
+    entities = [
+        LunchTimePartidaEntity::class,
+        LunchTimePlatoEntity::class,
+        GuerraPartidaEntity::class,
+        GuerraManoCartaEntity::class,
+    ],
+    version = 2,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun lunchTimeDao(): LunchTimeDao
+    abstract fun guerraPartidaDao(): GuerraPartidaDao
 
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
+
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `guerra_partida_en_curso` (
+                        `userId` TEXT NOT NULL,
+                        `playerScore` INTEGER NOT NULL,
+                        `rivalScore` INTEGER NOT NULL,
+                        `roundsPlayed` INTEGER NOT NULL,
+                        `areCardsRevealed` INTEGER NOT NULL,
+                        `playerPlayedCardId` TEXT,
+                        `rivalPlayedCardId` TEXT,
+                        `lastRoundWinner` TEXT,
+                        `lastRoundPlayerGain` INTEGER NOT NULL,
+                        `lastRoundRivalGain` INTEGER NOT NULL,
+                        `lastRoundPlayerWins` INTEGER NOT NULL,
+                        `lastRoundRivalWins` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`userId`)
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `guerra_mano_cartas` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `userId` TEXT NOT NULL,
+                        `owner` TEXT NOT NULL,
+                        `cardId` TEXT NOT NULL,
+                        FOREIGN KEY(`userId`) REFERENCES `guerra_partida_en_curso`(`userId`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_guerra_mano_cartas_userId` ON `guerra_mano_cartas` (`userId`)",
+                )
+            }
+        }
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -124,7 +171,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "codigo_verde.db",
-                ).build().also { INSTANCE = it }
+                ).addMigrations(MIGRATION_1_2).build().also { INSTANCE = it }
             }
         }
     }

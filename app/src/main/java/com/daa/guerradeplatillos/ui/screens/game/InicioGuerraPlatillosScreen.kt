@@ -34,6 +34,7 @@ import com.daa.guerradeplatillos.GuerraDePlatillosApp
 import com.daa.guerradeplatillos.R
 import com.daa.guerradeplatillos.ui.components.CircleIconButton
 import com.daa.guerradeplatillos.ui.components.PrimaryButton
+import com.daa.guerradeplatillos.ui.components.SecondaryButton
 import com.daa.guerradeplatillos.ui.components.ScreenContainer
 import com.daa.guerradeplatillos.ui.theme.AppTheme
 import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
@@ -41,6 +42,7 @@ import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
 @Composable
 fun InicioGuerraPlatillosScreen(
     onStartGameClick: () -> Unit,
+    onContinueGameClick: () -> Unit = {},
     onBack: () -> Unit,
     onSettingsClick: () -> Unit = {},
 ) {
@@ -48,12 +50,18 @@ fun InicioGuerraPlatillosScreen(
     val highScore by (app?.userRepository?.highScore?.collectAsStateWithLifecycle()
         ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(0) })
 
+    val hayPartidaGuardada by (app?.guerraGameRepository?.observarHayPartida()
+        ?.collectAsStateWithLifecycle(initialValue = false)
+        ?: androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) })
+
     LaunchedEffect(app) {
         app?.authRepository?.refrescarUsuarioActual()
     }
 
     InicioGuerraPlatillosContent(
         highScore = highScore,
+        hayPartidaGuardada = hayPartidaGuardada,
+        onContinueGameClick = onContinueGameClick,
         onStartGameClick = onStartGameClick,
         onBack = onBack,
         onSettingsClick = onSettingsClick,
@@ -63,7 +71,9 @@ fun InicioGuerraPlatillosScreen(
 @Composable
 private fun InicioGuerraPlatillosContent(
     highScore: Int,
+    hayPartidaGuardada: Boolean = false,
     onStartGameClick: () -> Unit,
+    onContinueGameClick: () -> Unit = {},
     onBack: () -> Unit,
     onSettingsClick: () -> Unit = {},
 ) {
@@ -188,7 +198,29 @@ private fun InicioGuerraPlatillosContent(
                 )
             }
 
-            // Botón inferior ¡JUGAR!
+            // Botones inferiores
+            if (hayPartidaGuardada) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    PrimaryButton(
+                        text = "CONTINUAR PARTIDA ▷",
+                        onClick = onContinueGameClick,
+                        shape = RoundedCornerShape(16.dp),
+                        minHeight = 52.dp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    SecondaryButton(
+                        text = "NUEVA PARTIDA",
+                        onClick = onStartGameClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    )
+                }
+            }
+            if (!hayPartidaGuardada)
             PrimaryButton(
                 text = "¡JUGAR! ▷",
                 onClick = onStartGameClick,

@@ -1,4 +1,4 @@
-package com.daa.guerradeplatillos.viewmodel
+﻿package com.daa.guerradeplatillos.viewmodel
 
 import android.app.Application
 import androidx.compose.runtime.getValue
@@ -6,6 +6,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
+import com.daa.guerradeplatillos.GuerraDePlatillosApp
+import com.daa.guerradeplatillos.data.GuerraGameRepository
 import androidx.lifecycle.viewModelScope
 import com.daa.guerradeplatillos.model.CardModel
 import com.daa.guerradeplatillos.sensors.ShakeDetector
@@ -41,9 +45,15 @@ data class RoundResult(
     val rivalCategoriesWon: Int,
 )
 
-class GameViewModel(application: Application) : AndroidViewModel(application) {
+class GameViewModel(
+    application: Application,
+    savedStateHandle: SavedStateHandle,
+) : AndroidViewModel(application) {
 
-    // --- LÓGICA DE SENSORES ---
+    private val guerraRepo: GuerraGameRepository? =
+        (application as? GuerraDePlatillosApp)?.guerraGameRepository
+
+    // --- LÃ“GICA DE SENSORES ---
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
@@ -77,7 +87,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         shakeDetector.stopListening()
     }
 
-    // --- LÓGICA DE GUERRA DE PLATILLOS ---
+    // --- LÃ“GICA DE GUERRA DE PLATILLOS ---
     private val fullDeck: List<CardModel> = loadDeckFromAssets(application)
 
     var playerHand by mutableStateOf(listOf<CardModel>())
@@ -112,7 +122,28 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         get() = roundsPlayed >= totalRounds
 
     init {
-        startNewGame()
+        val continuar = savedStateHandle.get<Boolean>("continuar") == true
+        if (continuar && guerraRepo != null) {
+            viewModelScope.launch {
+                val saved = guerraRepo.cargarPartida(fullDeck.associateBy { it.id })
+                if (saved != null) {
+                    playerHand = saved.playerHand
+                    rivalHand = saved.rivalHand
+                    selectedCard = null
+                    playerPlayedCard = saved.playerPlayedCard
+                    rivalPlayedCard = saved.rivalPlayedCard
+                    playerScore = saved.playerScore
+                    rivalScore = saved.rivalScore
+                    roundsPlayed = saved.roundsPlayed
+                    lastRoundResult = saved.lastRoundResult
+                    areCardsRevealed = saved.areCardsRevealed
+                } else {
+                    startNewGame()
+                }
+            }
+        } else {
+            startNewGame()
+        }
     }
 
     fun startNewGame() {
@@ -128,6 +159,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         roundsPlayed = 0
         lastRoundResult = null
         areCardsRevealed = false
+        persistCurrentState()
     }
 
     fun selectCard(card: CardModel) {
@@ -151,6 +183,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         rivalPlayedCard = rivalChoice
         selectedCard = null
         areCardsRevealed = false
+        persistCurrentState()
         lastRoundResult = null
     }
 
@@ -179,6 +212,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             RoundWinner.RIVAL -> SoundManager.playResultNegative()
             RoundWinner.TIE -> SoundManager.playBubbly()
         }
+        persistCurrentState()
     }
 
     /** Limpia las cartas ya jugadas de la mesa para comenzar la siguiente ronda. */
@@ -187,16 +221,42 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         playerPlayedCard = null
         rivalPlayedCard = null
         areCardsRevealed = false
+        persistCurrentState()
         lastRoundResult = null
     }
 
     /**
-     * Compara energía, saciedad y vitalidad:
-     * - Quien gana más categorías (2 de 3, o las 3) gana la ronda y suma la diferencia
-     *   de puntos de las categorías que ganó.
-     * - Si hay empate en cantidad de categorías ganadas, ambos suman la diferencia de
-     *   la categoría que cada uno ganó.
+     * Compara energÃ­a, saciedad y vitalidad:
+     * - Quien gana mÃ¡s categorÃ­as (2 de 3, o las 3) gana la ronda y suma la diferencia
+     *   de puntos de las categorÃ­as que ganÃ³.
+     * - Si hay empate en cantidad de categorÃ­as ganadas, ambos suman la diferencia de
+     *   la categorÃ­a que cada uno ganÃ³.
      */
+    /** Descarta la partida guardada en Room al finalizar el juego. */
+    fun finalizarPartida() {
+        val repo = guerraRepo ?: return
+        viewModelScope.launch {
+            repo.descartarPartida()
+        }
+    }
+
+    private fun persistCurrentState() {
+        val repo = guerraRepo ?: return
+        viewModelScope.launch {
+            repo.guardarPartida(
+                playerHand = playerHand,
+                rivalHand = rivalHand,
+                playerPlayedCard = playerPlayedCard,
+                rivalPlayedCard = rivalPlayedCard,
+                playerScore = playerScore,
+                rivalScore = rivalScore,
+                roundsPlayed = roundsPlayed,
+                areCardsRevealed = areCardsRevealed,
+                lastRoundResult = lastRoundResult,
+            )
+        }
+    }
+
     private fun evaluateRound(
         roundNumber: Int,
         playerCard: CardModel,

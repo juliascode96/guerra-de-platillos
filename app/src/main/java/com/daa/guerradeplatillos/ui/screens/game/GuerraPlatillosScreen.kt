@@ -272,7 +272,10 @@ fun GuerraPlatillosScreen(
                 if (viewModel.isGameFinished) {
                     PrimaryButton(
                         text = "FINALIZAR PARTIDA  →",
-                        onClick = { onFinishGame(viewModel.playerScore, viewModel.rivalScore) },
+                        onClick = {
+                            viewModel.finalizarPartida()
+                            onFinishGame(viewModel.playerScore, viewModel.rivalScore)
+                        },
                         shape = RoundedCornerShape(16.dp),
                         minHeight = 52.dp,
                         modifier = Modifier.fillMaxWidth()

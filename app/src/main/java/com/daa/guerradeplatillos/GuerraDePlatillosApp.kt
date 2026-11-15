@@ -2,6 +2,7 @@ package com.daa.guerradeplatillos
 
 import android.app.Application
 import com.daa.guerradeplatillos.data.AuthRepository
+import com.daa.guerradeplatillos.data.GuerraGameRepository
 import com.daa.guerradeplatillos.data.LunchTimeHistoryRepository
 import com.daa.guerradeplatillos.data.SettingsRepository
 import com.daa.guerradeplatillos.data.UserRepository
@@ -23,6 +24,9 @@ class GuerraDePlatillosApp : Application() {
     lateinit var lunchTimeHistoryRepository: LunchTimeHistoryRepository
         private set
 
+    lateinit var guerraGameRepository: GuerraGameRepository
+        private set
+
     override fun onCreate() {
         super.onCreate()
         settingsRepository = SettingsRepository(this)
@@ -30,6 +34,7 @@ class GuerraDePlatillosApp : Application() {
         authRepository = AuthRepository(userRepository)
         val db = AppDatabase.getInstance(this)
         lunchTimeHistoryRepository = LunchTimeHistoryRepository(db.lunchTimeDao(), authRepository)
+        guerraGameRepository = GuerraGameRepository(db.guerraPartidaDao(), authRepository)
         SoundManager.init(this) { settingsRepository.soundEnabled.value }
     }
 }
