@@ -1,4 +1,4 @@
-﻿package com.daa.guerradeplatillos.ui.navigation
+package com.daa.guerradeplatillos.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,7 +30,7 @@ import com.daa.guerradeplatillos.ui.screens.settings.SettingsScreen
 import com.daa.guerradeplatillos.util.SoundManager
 import com.daa.guerradeplatillos.viewmodel.LunchTimeViewModel
 
-/** Rutas de navegaciÃƒÂ³n de la app. */
+/** Rutas de navegación de la app. */
 object Routes {
     const val HOME = "home"
     const val AUTH = "auth"
@@ -103,7 +103,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 2. CreaciÃƒÂ³n de nuevo usuario / avatar
+        // 2. Creación de nuevo usuario / avatar
         composable(Routes.CREATE_USER) {
             EditProfileScreen(
                 isEditMode = false,
@@ -118,7 +118,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 3. MenÃƒÂº principal
+        // 3. Menú principal
         composable(Routes.MAIN_MENU) {
             MainMenuScreen(
                 onPlayGame1Click = {
@@ -126,7 +126,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                     navController.navigateSingleTop(Routes.INICIO_LUNCH_TIME)
                 },
                 onPlayGame2Click = {
-                    // Minijuego 2: Guerra de Platillos (Pantalla de inicio / presentaciÃƒÂ³n)
+                    // Minijuego 2: Guerra de Platillos (Pantalla de inicio / presentación)
                     navController.navigateSingleTop(Routes.INICIO_GUERRA_PLATILLOS)
                 },
                 onProfileClick = { navController.navigateSingleTop(Routes.PROFILE) },
@@ -143,7 +143,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 4. Pantalla de inicio / presentaciÃƒÂ³n de Lunch Time
+        // 4. Pantalla de inicio / presentación de Lunch Time
         composable(Routes.INICIO_LUNCH_TIME) {
             InicioLunchTimeScreen(
                 onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
@@ -155,7 +155,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 5. Pantalla de Opciones de Lunch Time (AutomÃƒÂ¡tico / Yo Elijo)
+        // 5. Pantalla de Opciones de Lunch Time (Automático / Yo Elijo)
         composable(Routes.OPCION_LUNCH_TIME) {
             OpcionLunchTimeScreen(
                 onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
@@ -168,7 +168,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 6. Pantalla interactiva del juego Lunch Time (SelecciÃƒÂ³n de alimentos)
+        // 6. Pantalla interactiva del juego Lunch Time (Selección de alimentos)
         composable(Routes.LUNCH_TIME_GAME) {
             LunchTimeScreen(
                 onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
@@ -212,7 +212,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 },
                 onStartGameClick = {
                     SoundManager.playStartGame()
-                    // Al presionar Ã‚Â¡JUGAR! pasa al juego principal de Guerra de Platillos
+                    // Al presionar ¡JUGAR! pasa al juego principal de Guerra de Platillos
                     navController.navigateSingleTop("${Routes.GAME}?continuar=false")
                 },
                 onBack = { navController.popBackStack() }
@@ -283,7 +283,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 11. ConfiguraciÃƒÂ³n (opciones)
+        // 11. Configuración (opciones)
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 onClose = { navController.popBackStack() },
@@ -312,8 +312,8 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        // 13. EdiciÃƒÂ³n de perfil existente
-        // 13b. GalerÃ­a de baraja completa
+        // 13. Edición de perfil existente
+        // 13b. Galería de baraja completa
         composable(Routes.DECK) {
             DeckScreen(
                 onBack = { navController.popBackStack() },

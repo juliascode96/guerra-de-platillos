@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,10 +15,13 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +62,8 @@ fun MainMenuScreen(
     val colors = AppTheme.colors
 
     ScreenContainer {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val isLandscape = maxWidth > maxHeight
         Column(modifier = Modifier.fillMaxSize()) {
             // Header: volver + ruedita de opciones
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -80,6 +86,7 @@ fun MainMenuScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .then(if (isLandscape) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                     .padding(vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween,
@@ -105,51 +112,100 @@ fun MainMenuScreen(
                 Spacer(Modifier.height(8.dp))
 
                 // Tarjetas de los Dos Juegos (Juego 1 y Juego 2)
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    GameCardItem(
-                        title = "LUNCH TIME",
-                        description = "Armá tu menú saludable.",
-                        buttonText = "¡JUGAR! ▷",
-                        coverRes = R.drawable.portada,
-                        onPlayClick = onPlayGame1Click
-                    )
+                if (isLandscape) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        GameCardItem(
+                            title = "LUNCH TIME",
+                            description = "Armá tu menú saludable.",
+                            buttonText = "¡JUGAR! ▷",
+                            coverRes = R.drawable.portada,
+                            onPlayClick = onPlayGame1Click,
+                            modifier = Modifier.weight(1f)
+                        )
 
-                    GameCardItem(
-                        title = "GUERRA DE PLATILLOS",
-                        description = "Desafío Máximo",
-                        buttonText = "¡JUGAR! ▷",
-                        coverRes = R.drawable.img_guerra_de_platillos_cover,
-                        onPlayClick = onPlayGame2Click
-                    )
+                        GameCardItem(
+                            title = "GUERRA DE PLATILLOS",
+                            description = "Desafío Máximo",
+                            buttonText = "¡JUGAR! ▷",
+                            coverRes = R.drawable.img_guerra_de_platillos_cover,
+                            onPlayClick = onPlayGame2Click,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        GameCardItem(
+                            title = "LUNCH TIME",
+                            description = "Armá tu menú saludable.",
+                            buttonText = "¡JUGAR! ▷",
+                            coverRes = R.drawable.portada,
+                            onPlayClick = onPlayGame1Click
+                        )
+
+                        GameCardItem(
+                            title = "GUERRA DE PLATILLOS",
+                            description = "Desafío Máximo",
+                            buttonText = "¡JUGAR! ▷",
+                            coverRes = R.drawable.img_guerra_de_platillos_cover,
+                            onPlayClick = onPlayGame2Click
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(8.dp))
 
                 // Botones inferiores de Perfil y Ranking
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    SecondaryButton(
-                        text = stringResource(R.string.main_menu_profile),
-                        onClick = onProfileClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                    )
+                if (isLandscape) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        SecondaryButton(
+                            text = stringResource(R.string.main_menu_profile),
+                            onClick = onProfileClick,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                        )
 
-                    SecondaryButton(
-                        text = stringResource(R.string.main_menu_ranking),
-                        onClick = onRankingClick,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                    )
+                        SecondaryButton(
+                            text = stringResource(R.string.main_menu_ranking),
+                            onClick = onRankingClick,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                        )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SecondaryButton(
+                            text = stringResource(R.string.main_menu_profile),
+                            onClick = onProfileClick,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        )
+
+                        SecondaryButton(
+                            text = stringResource(R.string.main_menu_ranking),
+                            onClick = onRankingClick,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        )
+                    }
                 }
             }
+        }
         }
     }
 }
@@ -160,13 +216,14 @@ fun GameCardItem(
     description: String,
     buttonText: String,
     @DrawableRes coverRes: Int? = null,
+    modifier: Modifier = Modifier,
     onPlayClick: () -> Unit
 ) {
     val cardBg = AppTheme.colors.cardBg
     val accentGreen = AppTheme.colors.success
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(130.dp)
             .clip(RoundedCornerShape(16.dp))

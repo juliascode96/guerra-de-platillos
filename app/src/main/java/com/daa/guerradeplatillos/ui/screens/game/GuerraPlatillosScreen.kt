@@ -11,12 +11,15 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -39,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -103,202 +107,375 @@ fun GuerraPlatillosScreen(
     }
 
     ScreenContainer {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(
-                    enabled = viewModel.canClearBoardForNextRound,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) {
-                    viewModel.clearBoardForNextRound()
-                },
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // 1. Cabecera: volver + contador de ronda + ajustes (sin título para evitar cortes)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CircleIconButton(
-                    icon = R.drawable.ic_arrow_back,
-                    contentDescription = stringResource(R.string.btn_back_description),
-                    onClick = onBack,
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(colors.cardBg)
-                        .border(1.dp, colors.cardBorder, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Ronda ${viewModel.roundsPlayed}/${viewModel.totalRounds}",
-                        color = colors.textPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                CircleIconButton(
-                    icon = R.drawable.ic_settings,
-                    contentDescription = stringResource(R.string.btn_settings_description),
-                    onClick = onSettingsClick,
-                )
-            }
-
-            // 2. Tablero de Duelo VS (más amplio) + resultado de la última ronda
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val isLandscape = maxWidth > maxHeight
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(vertical = 6.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(colors.cardBg)
-                        .border(1.dp, colors.success.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
-                        .padding(10.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxSize()
+                    .clickable(
+                        enabled = viewModel.canClearBoardForNextRound,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(horizontalAlignment = Alignment.Start) {
-                                Text(
-                                    text = "VOS:",
-                                    color = colors.textSecondary,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "${viewModel.playerScore} pts",
-                                    color = colors.textSecondary,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Black
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = "RIVAL:",
-                                    color = colors.error,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "${viewModel.rivalScore} pts",
-                                    color = colors.error,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Black
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(text = "VS", color = colors.success, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            MiniCard(
-                                card = viewModel.playerPlayedCard,
-                                width = 136.dp,
-                                height = 204.dp,
-                                isFaceDown = viewModel.isWaitingReveal,
-                                onClick = {
-                                    if (!viewModel.isWaitingReveal) {
-                                        viewModel.playerPlayedCard?.let { detailCard = it }
-                                    }
-                                }
-                            )
-
-                            MiniCard(
-                                card = viewModel.rivalPlayedCard,
-                                width = 136.dp,
-                                height = 204.dp,
-                                isFaceDown = viewModel.isWaitingReveal,
-                                onClick = {
-                                    if (!viewModel.isWaitingReveal) {
-                                        viewModel.rivalPlayedCard?.let { detailCard = it }
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
-
-                if (viewModel.isWaitingReveal) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    RevealPromptBanner(onFallbackTap = { viewModel.revealCurrentRound() })
-                } else {
-                    viewModel.lastRoundResult?.let { result ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        RoundResultBanner(
-                            result = result,
-                            canContinue = viewModel.canClearBoardForNextRound,
-                            onTapToClear = { viewModel.clearBoardForNextRound() }
+                        viewModel.clearBoardForNextRound()
+                    },
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // 1. Cabecera: volver + contador de ronda + ajustes
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircleIconButton(
+                        icon = R.drawable.ic_arrow_back,
+                        contentDescription = stringResource(R.string.btn_back_description),
+                        onClick = onBack,
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.cardBg)
+                            .border(1.dp, colors.cardBorder, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Ronda ${viewModel.roundsPlayed}/${viewModel.totalRounds}",
+                            color = colors.textPrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
-                }
-            }
-
-            // 3. Mano del Jugador (sin cartel duplicado cuando espera giroscopio ni al terminar)
-            Column(modifier = Modifier.fillMaxWidth()) {
-                if (!viewModel.isWaitingReveal && !viewModel.isGameFinished) {
-                    Text(
-                        text = "● Arrastrá una carta hacia arriba para jugar · Tocá para ver detalle",
-                        color = colors.textPrimary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                    CircleIconButton(
+                        icon = R.drawable.ic_settings,
+                        contentDescription = stringResource(R.string.btn_settings_description),
+                        onClick = onSettingsClick,
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
                 }
 
-                if (viewModel.isGameFinished) {
-                    PrimaryButton(
-                        text = "FINALIZAR PARTIDA  →",
-                        onClick = {
-                            viewModel.finalizarPartida()
-                            onFinishGame(viewModel.playerScore, viewModel.rivalScore)
-                        },
-                        shape = RoundedCornerShape(16.dp),
-                        minHeight = 52.dp,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else {
+                if (isLandscape) {
+                    Spacer(modifier = Modifier.height(6.dp))
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        viewModel.playerHand.forEach { card ->
-                            DraggableHandCard(
-                                card = card,
-                                dragEnabled = !viewModel.isWaitingReveal && !viewModel.canClearBoardForNextRound,
-                                onTap = { detailCard = card },
-                                onPlay = { viewModel.playCard(card) }
+                        // Izquierda: Tablero de Duelo VS con cartas grandes + banner de estado
+                        Column(
+                            modifier = Modifier
+                                .weight(1.15f)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(colors.cardBg)
+                                    .border(1.dp, colors.success.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                                    .padding(8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                                    val availableH = (maxHeight - 32.dp).coerceAtLeast(100.dp)
+                                    val availableW = ((maxWidth - 20.dp) / 2f).coerceAtLeast(70.dp)
+                                    val cardH = minOf(availableH, availableW * 1.5f).coerceIn(110.dp, 240.dp)
+                                    val cardW = cardH * 0.67f
+
+                                    Column(
+                                        modifier = Modifier.fillMaxSize(),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 8.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "VOS: ${viewModel.playerScore} pts",
+                                                color = colors.textSecondary,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Black
+                                            )
+                                            Text(
+                                                text = "VS",
+                                                color = colors.success,
+                                                fontSize = 16.sp,
+                                                fontWeight = FontWeight.Black
+                                            )
+                                            Text(
+                                                text = "RIVAL: ${viewModel.rivalScore} pts",
+                                                color = colors.error,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Black
+                                            )
+                                        }
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .weight(1f),
+                                            horizontalArrangement = Arrangement.SpaceEvenly,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            MiniCard(
+                                                card = viewModel.playerPlayedCard,
+                                                width = cardW,
+                                                height = cardH,
+                                                isFaceDown = viewModel.isWaitingReveal,
+                                                onClick = {
+                                                    if (!viewModel.isWaitingReveal) {
+                                                        viewModel.playerPlayedCard?.let { detailCard = it }
+                                                    }
+                                                }
+                                            )
+                                            MiniCard(
+                                                card = viewModel.rivalPlayedCard,
+                                                width = cardW,
+                                                height = cardH,
+                                                isFaceDown = viewModel.isWaitingReveal,
+                                                onClick = {
+                                                    if (!viewModel.isWaitingReveal) {
+                                                        viewModel.rivalPlayedCard?.let { detailCard = it }
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (viewModel.isWaitingReveal) {
+                                RevealPromptBanner(onFallbackTap = { viewModel.revealCurrentRound() })
+                            } else {
+                                viewModel.lastRoundResult?.let { result ->
+                                    RoundResultBanner(
+                                        result = result,
+                                        canContinue = viewModel.canClearBoardForNextRound,
+                                        onTapToClear = { viewModel.clearBoardForNextRound() }
+                                    )
+                                }
+                            }
+                        }
+
+                        // Derecha: Mano del jugador o botón de finalizar
+                        BoxWithConstraints(
+                            modifier = Modifier
+                                .weight(0.85f)
+                                .fillMaxHeight(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val maxPerCardW = ((maxWidth - 16.dp) / 3f).coerceIn(68.dp, 108.dp)
+                            val maxCardH = (maxHeight - 54.dp).coerceIn(108.dp, 172.dp)
+                            val handCardH = minOf(maxPerCardW * 1.58f, maxCardH)
+                            val handCardW = handCardH * 0.63f
+
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                if (!viewModel.isWaitingReveal && !viewModel.isGameFinished) {
+                                    Text(
+                                        text = "● Arrastrá hacia arriba para jugar · Tocá para detalle",
+                                        color = colors.textPrimary,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+
+                                if (viewModel.isGameFinished) {
+                                    PrimaryButton(
+                                        text = "FINALIZAR PARTIDA  →",
+                                        onClick = {
+                                            viewModel.finalizarPartida()
+                                            onFinishGame(viewModel.playerScore, viewModel.rivalScore)
+                                        },
+                                        shape = RoundedCornerShape(16.dp),
+                                        minHeight = 52.dp,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                } else {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                    ) {
+                                        viewModel.playerHand.forEach { card ->
+                                            DraggableHandCard(
+                                                card = card,
+                                                dragEnabled = !viewModel.isWaitingReveal && !viewModel.canClearBoardForNextRound,
+                                                cardWidth = handCardW,
+                                                cardHeight = handCardH,
+                                                onTap = { detailCard = card },
+                                                onPlay = { viewModel.playCard(card) }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // 2. Tablero de Duelo VS (vertical) + resultado de la última ronda
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(vertical = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(colors.cardBg)
+                                .border(1.dp, colors.success.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                                .padding(10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(horizontalAlignment = Alignment.Start) {
+                                        Text(
+                                            text = "VOS:",
+                                            color = colors.textSecondary,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "${viewModel.playerScore} pts",
+                                            color = colors.textSecondary,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            text = "RIVAL:",
+                                            color = colors.error,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "${viewModel.rivalScore} pts",
+                                            color = colors.error,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(text = "VS", color = colors.success, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    MiniCard(
+                                        card = viewModel.playerPlayedCard,
+                                        width = 136.dp,
+                                        height = 204.dp,
+                                        isFaceDown = viewModel.isWaitingReveal,
+                                        onClick = {
+                                            if (!viewModel.isWaitingReveal) {
+                                                viewModel.playerPlayedCard?.let { detailCard = it }
+                                            }
+                                        }
+                                    )
+
+                                    MiniCard(
+                                        card = viewModel.rivalPlayedCard,
+                                        width = 136.dp,
+                                        height = 204.dp,
+                                        isFaceDown = viewModel.isWaitingReveal,
+                                        onClick = {
+                                            if (!viewModel.isWaitingReveal) {
+                                                viewModel.rivalPlayedCard?.let { detailCard = it }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        if (viewModel.isWaitingReveal) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            RevealPromptBanner(onFallbackTap = { viewModel.revealCurrentRound() })
+                        } else {
+                            viewModel.lastRoundResult?.let { result ->
+                                Spacer(modifier = Modifier.height(8.dp))
+                                RoundResultBanner(
+                                    result = result,
+                                    canContinue = viewModel.canClearBoardForNextRound,
+                                    onTapToClear = { viewModel.clearBoardForNextRound() }
+                                )
+                            }
+                        }
+                    }
+
+                    // 3. Mano del Jugador
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        if (!viewModel.isWaitingReveal && !viewModel.isGameFinished) {
+                            Text(
+                                text = "● Arrastrá hacia arriba para jugar · Tocá para detalle",
+                                color = colors.textPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
                             )
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
+
+                        if (viewModel.isGameFinished) {
+                            PrimaryButton(
+                                text = "FINALIZAR PARTIDA  →",
+                                onClick = {
+                                    viewModel.finalizarPartida()
+                                    onFinishGame(viewModel.playerScore, viewModel.rivalScore)
+                                },
+                                shape = RoundedCornerShape(16.dp),
+                                minHeight = 52.dp,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                viewModel.playerHand.forEach { card ->
+                                    DraggableHandCard(
+                                        card = card,
+                                        dragEnabled = !viewModel.isWaitingReveal && !viewModel.canClearBoardForNextRound,
+                                        onTap = { detailCard = card },
+                                        onPlay = { viewModel.playCard(card) }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
         }
     }
-
     // Modal de detalle al tocar cualquier carta
     detailCard?.let { card ->
         CardDetailDialog(
@@ -312,6 +489,8 @@ fun GuerraPlatillosScreen(
 private fun DraggableHandCard(
     card: CardModel,
     dragEnabled: Boolean,
+    cardWidth: Dp = 108.dp,
+    cardHeight: Dp = 172.dp,
     onTap: () -> Unit,
     onPlay: () -> Unit,
 ) {
@@ -366,8 +545,8 @@ private fun DraggableHandCard(
     ) {
         MiniCard(
             card = card,
-            width = 108.dp,
-            height = 172.dp,
+            width = cardWidth,
+            height = cardHeight,
             isHighlighted = readyToPlay,
             onClick = onTap
         )
@@ -450,6 +629,7 @@ fun MiniCard(
     val colors = AppTheme.colors
     val paperBg = colors.textPrimary
     val paperText = colors.background
+    val isCompact = width < 110.dp
 
     if (card == null) {
         Box(
@@ -500,7 +680,7 @@ fun MiniCard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(7.dp),
+                .padding(if (isCompact) 4.dp else 7.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             // Espacio grande para la imagen del platillo (_mini)
@@ -536,13 +716,16 @@ fun MiniCard(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
                     .background(paperText.copy(alpha = 0.08f))
-                    .padding(horizontal = 6.dp, vertical = 5.dp),
+                    .padding(
+                        horizontal = if (isCompact) 3.dp else 6.dp,
+                        vertical = if (isCompact) 3.dp else 5.dp,
+                    ),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                AbbrevStat(letter = "E", value = card.energyPoints, textColor = paperText)
-                AbbrevStat(letter = "S", value = card.satietyPoints, textColor = paperText)
-                AbbrevStat(letter = "V", value = card.vitalityPoints, textColor = paperText)
+                AbbrevStat(letter = "E", value = card.energyPoints, textColor = paperText, compact = isCompact, modifier = Modifier.weight(1f))
+                AbbrevStat(letter = "S", value = card.satietyPoints, textColor = paperText, compact = isCompact, modifier = Modifier.weight(1f))
+                AbbrevStat(letter = "V", value = card.vitalityPoints, textColor = paperText, compact = isCompact, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -553,19 +736,30 @@ private fun AbbrevStat(
     letter: String,
     value: Int,
     textColor: Color,
+    compact: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Text(
             text = letter,
-            fontSize = 9.sp,
+            fontSize = if (compact) 8.sp else 9.sp,
+            lineHeight = if (compact) 9.sp else 11.sp,
             fontWeight = FontWeight.Bold,
-            color = textColor.copy(alpha = 0.7f)
+            color = textColor.copy(alpha = 0.7f),
+            maxLines = 1,
+            softWrap = false,
         )
         Text(
             text = "$value",
-            fontSize = 12.sp,
+            fontSize = if (compact) 10.sp else 12.sp,
+            lineHeight = if (compact) 11.sp else 14.sp,
             fontWeight = FontWeight.Black,
-            color = textColor
+            color = textColor,
+            maxLines = 1,
+            softWrap = false,
         )
     }
 }
@@ -578,17 +772,19 @@ fun CardDetailDialog(
     val colors = AppTheme.colors
     val fullRes = cardDrawableRes(card.id, mini = false)
 
+    val maxDialogHeight = (LocalConfiguration.current.screenHeightDp * 0.85f).dp
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = maxDialogHeight)
                 .clip(RoundedCornerShape(16.dp))
         ) {
             if (fullRes != null) {
                 Image(
                     painter = painterResource(fullRes),
                     contentDescription = card.name,
-                    contentScale = ContentScale.FillWidth,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {

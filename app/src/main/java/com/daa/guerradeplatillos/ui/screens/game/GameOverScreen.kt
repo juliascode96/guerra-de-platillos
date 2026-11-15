@@ -2,6 +2,7 @@ package com.daa.guerradeplatillos.ui.screens.game
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,7 +47,13 @@ fun GameOverScreen(
     val colors = AppTheme.colors
 
     ScreenContainer {
-        Column(modifier = Modifier.fillMaxSize()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val isLandscape = maxWidth > maxHeight
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(if (isLandscape) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+            ) {
             // Header: volver al menú + ruedita de opciones
             Box(modifier = Modifier.fillMaxWidth()) {
                 CircleIconButton(
@@ -64,7 +73,7 @@ fun GameOverScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .then(if (!isLandscape) Modifier.weight(1f) else Modifier.padding(vertical = 12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 if (playerScore != null && rivalScore != null) {
@@ -116,19 +125,41 @@ fun GameOverScreen(
                 }
             }
 
-            PrimaryButton(
-                text = stringResource(R.string.game_over_play_again),
-                onClick = onPlayAgain,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(12.dp))
-            SecondaryButton(
-                text = stringResource(R.string.game_over_back_menu),
-                onClick = onBackToMenu,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp)
-            )
+            if (isLandscape) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    PrimaryButton(
+                        text = stringResource(R.string.game_over_play_again),
+                        onClick = onPlayAgain,
+                        minHeight = 48.dp,
+                        modifier = Modifier.weight(1f)
+                    )
+                    SecondaryButton(
+                        text = stringResource(R.string.game_over_back_menu),
+                        onClick = onBackToMenu,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    )
+                }
+            } else {
+                PrimaryButton(
+                    text = stringResource(R.string.game_over_play_again),
+                    onClick = onPlayAgain,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(12.dp))
+                SecondaryButton(
+                    text = stringResource(R.string.game_over_back_menu),
+                    onClick = onBackToMenu,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp)
+                )
+            }
+        }
         }
     }
 }

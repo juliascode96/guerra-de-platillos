@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -91,6 +92,8 @@ fun ResultadoLunchTimeScreen(
     }
 
     ScreenContainer {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val isLandscape = maxWidth > maxHeight
         Column(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 CircleIconButton(
@@ -116,7 +119,8 @@ fun ResultadoLunchTimeScreen(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Image(
+                if (!isLandscape) {
+                    Image(
                     painter = painterResource(
                         id = if (puntaje.esVictoria) R.drawable.img_resultado_victoria
                         else R.drawable.img_resultado_derrota
@@ -127,6 +131,7 @@ fun ResultadoLunchTimeScreen(
                         .size(140.dp)
                         .clip(RoundedCornerShape(20.dp))
                 )
+                }
 
                 Text(
                     text = if (puntaje.esVictoria) "¡PARTIDA GANADA! 🎉" else "¡PARTIDA PERDIDA! ⚠️",
@@ -134,7 +139,7 @@ fun ResultadoLunchTimeScreen(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = if (isLandscape) 4.dp else 16.dp)
                 )
                 Text(
                     text = if (puntaje.esVictoria) "Excelente combinación de alimentos saludables."
@@ -228,21 +233,44 @@ fun ResultadoLunchTimeScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            PrimaryButton(
-                text = "Volver a jugar",
-                onClick = onPlayAgain,
-                shape = RoundedCornerShape(16.dp),
-                minHeight = 54.dp,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(8.dp))
-            SecondaryButton(
-                text = "Volver al menú",
-                onClick = onBackToMenu,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-            )
+            if (isLandscape) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    PrimaryButton(
+                        text = "Volver a jugar",
+                        onClick = onPlayAgain,
+                        shape = RoundedCornerShape(16.dp),
+                        minHeight = 48.dp,
+                        modifier = Modifier.weight(1f)
+                    )
+                    SecondaryButton(
+                        text = "Volver al menú",
+                        onClick = onBackToMenu,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    )
+                }
+            } else {
+                PrimaryButton(
+                    text = "Volver a jugar",
+                    onClick = onPlayAgain,
+                    shape = RoundedCornerShape(16.dp),
+                    minHeight = 54.dp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+                SecondaryButton(
+                    text = "Volver al menú",
+                    onClick = onBackToMenu,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                )
+            }
+        }
         }
     }
 }

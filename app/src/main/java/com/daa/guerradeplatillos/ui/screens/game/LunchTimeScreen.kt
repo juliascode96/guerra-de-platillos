@@ -8,14 +8,17 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -37,6 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -64,6 +68,132 @@ private fun imagenRes(context: Context, alimento: Alimento): Int {
 
 private fun nombreCorto(alimento: Alimento): String =
     alimento.nombreCorto.ifEmpty { alimento.opcion }
+
+@Composable
+private fun AlimentoGridCard(
+    food: Alimento,
+    imagen: Int,
+    isSelected: Boolean,
+    cardHeight: Dp,
+    imageHeight: Dp,
+    onClick: () -> Unit,
+) {
+    val colors = AppTheme.colors
+    val shape = RoundedCornerShape(16.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(cardHeight)
+            .clip(shape)
+            .background(colors.cardBg)
+            .border(
+                width = if (isSelected) 2.dp else 1.dp,
+                color = if (isSelected) colors.warning else colors.cardBorder,
+                shape = shape
+            )
+            .clickable(onClick = onClick),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(imageHeight)
+                .background(colors.cardUnselectedBg)
+        ) {
+            Image(
+                painter = painterResource(id = imagen),
+                contentDescription = nombreCorto(food),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(6.dp)
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.warning),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "✓",
+                        color = colors.buttonPrimaryText,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = nombreCorto(food),
+                color = colors.textPrimary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun BandejaFooter(
+    bandejaSize: Int,
+    onConfirm: () -> Unit,
+) {
+    val colors = AppTheme.colors
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "TU BANDEJA",
+                color = colors.textSecondary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Bandeja $bandejaSize/${ReglasJuego.MAX_ALIMENTOS}",
+                color = colors.success,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        LinearProgressIndicator(
+            progress = { bandejaSize / ReglasJuego.MAX_ALIMENTOS.toFloat() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
+            color = colors.success,
+            trackColor = colors.cardBg,
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        PrimaryButton(
+            text = "CONFIRMAR MENÚ",
+            onClick = onConfirm,
+            shape = RoundedCornerShape(16.dp),
+            minHeight = 52.dp,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
 
 /** Pantalla de juego de Lunch Time: el jugador arma su bandeja antes de que se acabe el tiempo. */
 @Composable
@@ -114,6 +244,8 @@ fun LunchTimeScreen(
     val timerColor = if (segundos <= 10 && tiempoMs > 0) colors.error else colors.textPrimary
 
     ScreenContainer {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val isLandscape = maxWidth > maxHeight
         Column(modifier = Modifier.fillMaxSize()) {
             // Cabecera: salir (X) + comida + horario
             Row(
@@ -164,6 +296,69 @@ fun LunchTimeScreen(
                 )
             }
 
+            if (isLandscape) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items(alimentos, key = { it.opcion }) { food ->
+                            AlimentoGridCard(
+                                food = food,
+                                imagen = remember(food.imagen) { imagenRes(context, food) },
+                                isSelected = bandeja.contains(food),
+                                cardHeight = 140.dp,
+                                imageHeight = 90.dp,
+                                onClick = { viewModel.alternarAlimento(food) },
+                            )
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .width(210.dp)
+                            .fillMaxHeight(),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(colors.cardBg)
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Text(
+                                text = "Elegí ${ReglasJuego.MAX_ALIMENTOS} alimentos para tu ${comida.titulo.lowercase()}",
+                                color = colors.success,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                text = timerText,
+                                color = timerColor,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+
+                        BandejaFooter(
+                            bandejaSize = bandeja.size,
+                            onConfirm = viewModel::confirmarBandeja,
+                        )
+                    }
+                }
+            } else {
             Spacer(modifier = Modifier.height(14.dp))
 
             // Instrucción + temporizador
@@ -202,120 +397,24 @@ fun LunchTimeScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(alimentos, key = { it.opcion }) { food ->
-                    val isSelected = bandeja.contains(food)
-                    val shape = RoundedCornerShape(16.dp)
-                    val imagen = remember(food.imagen) { imagenRes(context, food) }
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(175.dp)
-                            .clip(shape)
-                            .background(colors.cardBg)
-                            .border(
-                                width = if (isSelected) 2.dp else 1.dp,
-                                color = if (isSelected) colors.warning else colors.cardBorder,
-                                shape = shape
-                            )
-                            .clickable { viewModel.alternarAlimento(food) },
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(120.dp)
-                                .background(colors.cardUnselectedBg)
-                        ) {
-                            Image(
-                                painter = painterResource(id = imagen),
-                                contentDescription = nombreCorto(food),
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                            if (isSelected) {
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(6.dp)
-                                        .size(24.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(colors.warning),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "✓",
-                                        color = colors.buttonPrimaryText,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .padding(horizontal = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = nombreCorto(food),
-                                color = colors.textPrimary,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                    items(alimentos, key = { it.opcion }) { food ->
+                        AlimentoGridCard(
+                            food = food,
+                            imagen = remember(food.imagen) { imagenRes(context, food) },
+                            isSelected = bandeja.contains(food),
+                            cardHeight = 175.dp,
+                            imageHeight = 120.dp,
+                            onClick = { viewModel.alternarAlimento(food) },
+                        )
                     }
                 }
-            }
 
-            // Progreso de la bandeja y botón de confirmación
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "TU BANDEJA",
-                        color = colors.textSecondary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Bandeja ${bandeja.size}/${ReglasJuego.MAX_ALIMENTOS}",
-                        color = colors.success,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                LinearProgressIndicator(
-                    progress = { bandeja.size / ReglasJuego.MAX_ALIMENTOS.toFloat() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    color = colors.success,
-                    trackColor = colors.cardBg,
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                PrimaryButton(
-                    text = "CONFIRMAR MENÚ",
-                    onClick = viewModel::confirmarBandeja,
-                    shape = RoundedCornerShape(16.dp),
-                    minHeight = 52.dp,
-                    modifier = Modifier.fillMaxWidth()
+                BandejaFooter(
+                    bandejaSize = bandeja.size,
+                    onConfirm = viewModel::confirmarBandeja,
                 )
             }
+        }
         }
     }
 }

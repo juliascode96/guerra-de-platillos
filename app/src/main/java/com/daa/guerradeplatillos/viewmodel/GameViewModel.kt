@@ -1,4 +1,4 @@
-﻿package com.daa.guerradeplatillos.viewmodel
+package com.daa.guerradeplatillos.viewmodel
 
 import android.app.Application
 import androidx.compose.runtime.getValue
@@ -53,7 +53,7 @@ class GameViewModel(
     private val guerraRepo: GuerraGameRepository? =
         (application as? GuerraDePlatillosApp)?.guerraGameRepository
 
-    // --- LÃ“GICA DE SENSORES ---
+    // --- LÓGICA DE SENSORES ---
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
@@ -87,7 +87,7 @@ class GameViewModel(
         shakeDetector.stopListening()
     }
 
-    // --- LÃ“GICA DE GUERRA DE PLATILLOS ---
+    // --- LÓGICA DE GUERRA DE PLATILLOS ---
     private val fullDeck: List<CardModel> = loadDeckFromAssets(application)
 
     var playerHand by mutableStateOf(listOf<CardModel>())
@@ -226,11 +226,11 @@ class GameViewModel(
     }
 
     /**
-     * Compara energÃ­a, saciedad y vitalidad:
-     * - Quien gana mÃ¡s categorÃ­as (2 de 3, o las 3) gana la ronda y suma la diferencia
-     *   de puntos de las categorÃ­as que ganÃ³.
-     * - Si hay empate en cantidad de categorÃ­as ganadas, ambos suman la diferencia de
-     *   la categorÃ­a que cada uno ganÃ³.
+     * Compara energía, saciedad y vitalidad:
+     * - Quien gana más categorías (2 de 3, o las 3) gana la ronda y suma la diferencia
+     *   de puntos de las categorías que ganó.
+     * - Si hay empate en cantidad de categorías ganadas, ambos suman la diferencia de
+     *   la categoría que cada uno ganó.
      */
     /** Descarta la partida guardada en Room al finalizar el juego. */
     fun finalizarPartida() {
