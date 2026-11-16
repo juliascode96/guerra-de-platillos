@@ -20,10 +20,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,11 +44,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.daa.guerradeplatillos.R
 import com.daa.guerradeplatillos.ui.components.CircleIconButton
-import com.daa.guerradeplatillos.ui.components.PrimaryButton
 import com.daa.guerradeplatillos.ui.components.ScreenContainer
 import com.daa.guerradeplatillos.ui.components.SecondaryButton
 import com.daa.guerradeplatillos.ui.theme.AppTheme
 import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
+import com.daa.guerradeplatillos.util.SoundManager
 
 /**
  * Pantalla de Menú Principal con los dos minijuegos, Perfil y Ranking.
@@ -167,15 +170,10 @@ fun MainMenuScreen(
                     Spacer(Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        PrimaryButton(
-                            text = "📷 Escanear carta",
-                            onClick = onScanCardClick,
-                            minHeight = 44.dp,
-                            modifier = Modifier.weight(1f)
-                        )
-
+                        QrScanCircleButton(onClick = onScanCardClick)
+                        Spacer(Modifier.width(16.dp))
                         SecondaryButton(
                             text = stringResource(R.string.main_menu_profile),
                             onClick = onProfileClick,
@@ -183,7 +181,7 @@ fun MainMenuScreen(
                                 .weight(1f)
                                 .height(44.dp)
                         )
-
+                        Spacer(Modifier.width(8.dp))
                         SecondaryButton(
                             text = stringResource(R.string.main_menu_ranking),
                             onClick = onRankingClick,
@@ -199,12 +197,12 @@ fun MainMenuScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        PrimaryButton(
-                            text = "📷 Escanear carta",
-                            onClick = onScanCardClick,
-                            minHeight = 46.dp,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            QrScanCircleButton(
+                                onClick = onScanCardClick,
+                                modifier = Modifier.align(Alignment.CenterStart)
+                            )
+                        }
 
                         SecondaryButton(
                             text = stringResource(R.string.main_menu_profile),
@@ -322,6 +320,33 @@ private fun MainMenuScreenPreview() {
             onRankingClick = {},
             onSettingsClick = {},
             onBack = {},
+        )
+    }
+}
+
+@Composable
+private fun QrScanCircleButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AppTheme.colors
+    Box(
+        modifier = modifier
+            .size(46.dp)
+            .clip(CircleShape)
+            .background(colors.warning)
+            .border(1.5.dp, colors.textPrimary.copy(alpha = 0.25f), CircleShape)
+            .clickable {
+                SoundManager.playBubbly()
+                onClick()
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_qr_code),
+            contentDescription = "Escanear carta",
+            tint = colors.buttonPrimaryText,
+            modifier = Modifier.size(24.dp),
         )
     }
 }
