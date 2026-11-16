@@ -715,7 +715,7 @@ fun MiniCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(paperText.copy(alpha = 0.08f))
+                    .background(colors.background)
                     .padding(
                         horizontal = if (isCompact) 3.dp else 6.dp,
                         vertical = if (isCompact) 3.dp else 5.dp,
@@ -723,11 +723,21 @@ fun MiniCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                AbbrevStat(letter = "E", value = card.energyPoints, textColor = paperText, compact = isCompact, modifier = Modifier.weight(1f))
-                AbbrevStat(letter = "S", value = card.satietyPoints, textColor = paperText, compact = isCompact, modifier = Modifier.weight(1f))
-                AbbrevStat(letter = "V", value = card.vitalityPoints, textColor = paperText, compact = isCompact, modifier = Modifier.weight(1f))
+                AbbrevStat(letter = "E", value = card.energyPoints, textColor = colors.textPrimary, compact = isCompact, modifier = Modifier.weight(1f))
+                AbbrevStat(letter = "S", value = card.satietyPoints, textColor = colors.textPrimary, compact = isCompact, modifier = Modifier.weight(1f))
+                AbbrevStat(letter = "V", value = card.vitalityPoints, textColor = colors.textPrimary, compact = isCompact, modifier = Modifier.weight(1f))
             }
         }
+    }
+}
+
+@Composable
+private fun statTrafficColor(value: Int): Color {
+    val colors = AppTheme.colors
+    return when {
+        value <= 30 -> colors.error
+        value <= 65 -> colors.warning
+        else -> colors.success
     }
 }
 
@@ -757,7 +767,7 @@ private fun AbbrevStat(
             fontSize = if (compact) 10.sp else 12.sp,
             lineHeight = if (compact) 11.sp else 14.sp,
             fontWeight = FontWeight.Black,
-            color = textColor,
+            color = statTrafficColor(value),
             maxLines = 1,
             softWrap = false,
         )
