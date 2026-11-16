@@ -14,6 +14,8 @@ import androidx.navigation.navArgument
 import com.daa.guerradeplatillos.GuerraDePlatillosApp
 import com.daa.guerradeplatillos.ui.screens.auth.AuthScreen
 import com.daa.guerradeplatillos.ui.screens.deck.DeckScreen
+import com.daa.guerradeplatillos.ui.screens.deck.QrScanMode
+import com.daa.guerradeplatillos.ui.screens.deck.QrScannerScreen
 import com.daa.guerradeplatillos.ui.screens.game.GameOverScreen
 import com.daa.guerradeplatillos.ui.screens.game.GuerraPlatillosScreen
 import com.daa.guerradeplatillos.ui.screens.game.InicioGuerraPlatillosScreen
@@ -53,6 +55,7 @@ object Routes {
     const val PROFILE = "profile"
     const val EDIT_PROFILE = "edit_profile"
     const val DECK = "deck"
+    const val QR_SCANNER = "qr_scanner"
 }
 
 @Composable
@@ -130,6 +133,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                     navController.navigateSingleTop(Routes.INICIO_GUERRA_PLATILLOS)
                 },
                 onProfileClick = { navController.navigateSingleTop(Routes.PROFILE) },
+                onScanCardClick = { navController.navigateSingleTop("${Routes.QR_SCANNER}?mode=card") },
                 onRankingClick = { navController.navigateSingleTop(Routes.RANKING) },
                 onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
                 onBack = { navController.popBackStack() },
@@ -308,12 +312,31 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 },
                 onEditClick = { navController.navigateSingleTop(Routes.EDIT_PROFILE) },
                 onVerBarajaClick = { navController.navigateSingleTop(Routes.DECK) },
+                onImprimirBarajaClick = { navController.navigateSingleTop("${Routes.QR_SCANNER}?mode=deck") },
                 onRankingClick = { navController.navigateSingleTop(Routes.RANKING) },
             )
         }
 
         // 13. Edición de perfil existente
         // 13b. Galería de baraja completa
+        composable(
+            route = "${Routes.QR_SCANNER}?mode={mode}",
+            arguments = listOf(
+                navArgument("mode") {
+                    type = NavType.StringType
+                    defaultValue = "card"
+                },
+            ),
+        ) { backStackEntry ->
+            val modeArg = backStackEntry.arguments?.getString("mode")
+            val scanMode = if (modeArg == "deck") QrScanMode.PRINTABLE_DECK else QrScanMode.CARD_DETAIL
+            QrScannerScreen(
+                mode = scanMode,
+                onBack = { navController.popBackStack() },
+                onSettingsClick = { navController.navigateSingleTop(Routes.SETTINGS) },
+            )
+        }
+
         composable(Routes.DECK) {
             DeckScreen(
                 onBack = { navController.popBackStack() },

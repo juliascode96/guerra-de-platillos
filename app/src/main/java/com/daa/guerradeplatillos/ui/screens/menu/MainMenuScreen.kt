@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.daa.guerradeplatillos.R
 import com.daa.guerradeplatillos.ui.components.CircleIconButton
+import com.daa.guerradeplatillos.ui.components.PrimaryButton
 import com.daa.guerradeplatillos.ui.components.ScreenContainer
 import com.daa.guerradeplatillos.ui.components.SecondaryButton
 import com.daa.guerradeplatillos.ui.theme.AppTheme
@@ -54,6 +55,7 @@ fun MainMenuScreen(
     onPlayGame1Click: () -> Unit,
     onPlayGame2Click: () -> Unit,
     onProfileClick: () -> Unit,
+    onScanCardClick: () -> Unit = {},
     onRankingClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onBack: () -> Unit,
@@ -87,9 +89,9 @@ fun MainMenuScreen(
                     .fillMaxWidth()
                     .weight(1f)
                     .then(if (isLandscape) Modifier.verticalScroll(rememberScrollState()) else Modifier)
-                    .padding(vertical = 8.dp),
+                    .padding(top = 2.dp, bottom = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = if (isLandscape) Arrangement.SpaceBetween else Arrangement.Top,
             ) {
                 // Títulos superiores
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -162,10 +164,18 @@ fun MainMenuScreen(
 
                 // Botones inferiores de Perfil y Ranking
                 if (isLandscape) {
+                    Spacer(Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        PrimaryButton(
+                            text = "📷 Escanear carta",
+                            onClick = onScanCardClick,
+                            minHeight = 44.dp,
+                            modifier = Modifier.weight(1f)
+                        )
+
                         SecondaryButton(
                             text = stringResource(R.string.main_menu_profile),
                             onClick = onProfileClick,
@@ -183,16 +193,25 @@ fun MainMenuScreen(
                         )
                     }
                 } else {
+                    Spacer(Modifier.weight(1f))
+                    Spacer(Modifier.height(12.dp))
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        PrimaryButton(
+                            text = "📷 Escanear carta",
+                            onClick = onScanCardClick,
+                            minHeight = 46.dp,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
                         SecondaryButton(
                             text = stringResource(R.string.main_menu_profile),
                             onClick = onProfileClick,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp)
+                                .height(46.dp)
                         )
 
                         SecondaryButton(
@@ -200,7 +219,7 @@ fun MainMenuScreen(
                             onClick = onRankingClick,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp)
+                                .height(46.dp)
                         )
                     }
                 }

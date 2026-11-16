@@ -817,7 +817,7 @@ fun CardDetailDialog(
 }
 
 @DrawableRes
-private fun cardDrawableRes(cardId: String, mini: Boolean): Int? = when (cardId) {
+internal fun cardDrawableRes(cardId: String, mini: Boolean): Int? = when (cardId) {
     "alfajor" -> if (mini) R.drawable.img_alfajor_mini else R.drawable.img_alfajor
     "avena" -> if (mini) R.drawable.img_avena_mini else R.drawable.img_avena
     "banana_mani" -> if (mini) R.drawable.img_banana_mani_mini else R.drawable.img_banana_mani

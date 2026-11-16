@@ -72,6 +72,7 @@ fun ProfileScreen(
     onSettingsClick: () -> Unit,
     onEditClick: () -> Unit,
     onVerBarajaClick: () -> Unit = {},
+    onImprimirBarajaClick: () -> Unit = {},
     onRankingClick: () -> Unit = {},
     viewModel: ProfileViewModel = viewModel(),
 ) {
@@ -96,7 +97,7 @@ fun ProfileScreen(
         onSettingsClick = onSettingsClick,
         onEditClick = onEditClick,
         onVerBarajaClick = onVerBarajaClick,
-        onImprimirBarajaClick = proximamente,
+        onImprimirBarajaClick = onImprimirBarajaClick,
         onRankingClick = onRankingClick,
     )
 }
