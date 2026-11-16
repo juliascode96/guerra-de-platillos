@@ -346,12 +346,21 @@ La base de datos local `AppDatabase` (`codigo_verde.db`, versión 2 con `MIGRATI
 ### Sensor utilizado y respuesta háptica
 * **Acelerómetro (`ShakeDetector`):** Implementado sobre `SensorManager` (`Sensor.TYPE_ACCELEROMETER`) en `GuerraPlatillosScreen` / `GameViewModel`, registrando el listener en `ON_RESUME` y liberándolo en `ON_PAUSE`.
 * **Función en el juego:** Cuando ambos jugadores colocaron su carta boca abajo sobre el tablero, agitar el teléfono supera el umbral de aceleración configurado y ejecuta `revealCurrentRound()` para dar vuelta ambas cartas simultáneamente, acompañado de **respuesta háptica** (`Vibrator` / `VibrationEffect`) y efecto sonoro. También se ofrece un banner táctil alternativo en pantalla para dispositivos sin sensor o pruebas rápidas.
+* **Funcionalidad de los sensores**:
+  *  En cuanto a los sensores utilizados, se utilizan el acelerómetro, el giroscopio y el magnetómetro juntos para una mejor precisión de cálculo y para que el gesto de agitar se pueda realizar correctamente.
+  *  Se tuvo en cuenta la aceleración del teléfono en una dirección (usando el acelerómetro), teniendo en cuenta y compensando la aceleración de la gravedad (9,81 m/s²), la velocidad angular (usando el giroscopio) y el campo magnético (usando el magnetómetro).
+  *  El cálculo de la magnitud de estos valores se realiza en los tres ejes de movimiento del espacio euclidiano (x y z), mediante vectores en cada eje, y combinando los tres mediante una fórmula similar al Teorema de Pitágoras, para dar la magnitud y dirección de agitación independientemente de la dirección y sentido en que se agite el teléfono.
+  *  El mencionado archivo Sensors.kt tiene una variable editable para ajustar la sensibilidad o umbral de agitación, para evitar ejecutar la acción al agitar por accidente, o que se necesite agitar el dispositivo con demasiada fuerza. Así como también, contiene una acción definida si la agitación se realizó, que es hacer vibrar el dispositivo (respuesta háptica), ya que hacer gestos con el teléfono requiere de una respuesta de retroalimentación al usuario inmediata. Este gesto también desencadenará la mencionada acción de mostrar las cartas jugadas en el juego “Guerra de Platillos”. Este mismo archivo cuenta con funciones para desregistrar los escuchadores de los sensores, para que estos no se lean fuera de la pantalla de dicho juego o cuando dicha pantalla pasa a segundo plano (onPause), con el fin de liberar recursos y ahorrar batería.
 
 ### Cámara, Escáner QR y PDF local
 * **CameraX + ML Kit (`QrScannerScreen`):** Integra `PreviewView` e `ImageAnalysis` configurado con `BarcodeScanning` restringido a `FORMAT_QR_CODE`, solicitando el permiso `CAMERA` en tiempo de ejecución.
 * **Modos de uso:**
   * **Escanear carta (`codigoverde:{id}`):** Busca la carta en `DeckRepository` y la muestra en un overlay sin bloquear la cabecera de navegación, evitando re-disparos mientras se siga apuntando al mismo QR.
   * **Imprimir baraja (`codigoverde:baraja_imprimible`):** Copia `assets/baraja_imprimible.pdf` al caché interno y lo abre mediante `FileProvider` (`Intent.ACTION_VIEW` con `application/pdf`). Ante cualquier otro QR muestra la alerta *"¡Ups! Baraja no encontrada 🃏"*.
+  * **Manejo de CameraX y ML Kit**: controlado respectivamente por los archivos camera/CameraManager.kt y mlkit/BarcodeScannerAnalyzer.kt, los cuales trabajan en conjunto:
+    * CameraManager.kt controla la cámara mediante la librería CameraX. Al abrir la pantalla de escaneo, se activa la cámara trasera del dispositivo y se muestra en pantalla lo que ve. La cámara trabaja en un hilo secundario de procesamiento para que la aplicación no se congele, y va actualizando lo que ve fotograma tras fotograma, para ahorrar memoria y evitar retrasos.
+    * BarcodeScannerAnalyzer.kt recibe la imagen capturada por la cámara y ajusta su rotación para que quede derecha, facilitando la lectura. Usa ML Kit para buscar marcas de códigos QR dentro de la foto y leer la información almacenada en ellos. Tan pronto como un código QR es detectado, el escáner se pausa automáticamente (isScanning = false), para que no lo lea decenas de veces por segundo. Finalmente, envía el texto detectado a la pantalla principal (onQRCodeDetected) para continuar con la acción correspondiente que es acceder a la versión imprimible de la baraja del juego “Guerra de Platillos”.
+    * Una vez analizada cada foto, el sistema la “cierra de inmediato” (imageProxy.close()). Esto evita que la memoria RAM del teléfono se llene. Cuando el usuario sale de la pantalla de escaneo, CameraManager apaga la cámara y detiene los procesos para no consumir batería en segundo plano.
 
 ### Administración del estado y ciclo de vida
 * **Compose State y `StateFlow`:** El estado de las pantallas y partidas se mantiene en `ViewModel`s, conservando temporizador, selección de bandeja o cartas en mesa ante rotaciones.
@@ -381,6 +390,6 @@ La base de datos local `AppDatabase` (`codigo_verde.db`, versión 2 con `MIGRATI
 | Integrante | Rol en el equipo | Tareas realizadas |
 | :--- | :--- | :--- |
 | **Betancor Fernando** | *[Por completar]* | *[Por completar]* |
-| **Rey Lucas** | *[Por completar]* | *[Por completar]* |
+| **Rey Lucas** | Supervisión, dispositivos y sensores | Implementación de funcionalidad de sensores para gestos de agitado y de escaneo de códigos QR utilizando la cámara del teléfono. |
 | **Rodríguez Stephany** | *[Por completar]* | *[Por completar]* |
 | **Scodelari Julia** | Programación y documentación | Armado del readme.md, implementación del patrón MVVM, generación de assets (imágenes, sonidos, animaciones), implementación de base de datos en firestore y conexión desde la app. Armado de la lógica del perfil de usuario. |
