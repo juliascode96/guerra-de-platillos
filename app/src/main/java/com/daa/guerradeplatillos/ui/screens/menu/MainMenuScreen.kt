@@ -1,18 +1,41 @@
 package com.daa.guerradeplatillos.ui.screens.menu
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -21,42 +44,39 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.daa.guerradeplatillos.R
 import com.daa.guerradeplatillos.ui.components.CircleIconButton
-import com.daa.guerradeplatillos.ui.components.PrimaryButton
 import com.daa.guerradeplatillos.ui.components.ScreenContainer
 import com.daa.guerradeplatillos.ui.components.SecondaryButton
 import com.daa.guerradeplatillos.ui.theme.AppTheme
 import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
+import com.daa.guerradeplatillos.util.SoundManager
 
 /**
- * Pantalla de Menú Principal.
- * Desde acá el usuario puede ir a Jugar, ver su Perfil o consultar el Ranking.
+ * Pantalla de Menú Principal con los dos minijuegos, Perfil y Ranking.
  */
 @Composable
 fun MainMenuScreen(
-    onPlayClick: () -> Unit,
+    onPlayGame1Click: () -> Unit,
+    onPlayGame2Click: () -> Unit,
     onProfileClick: () -> Unit,
+    onScanCardClick: () -> Unit = {},
     onRankingClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onBack: () -> Unit,
+    onLogoutClick: () -> Unit = {},
 ) {
     val colors = AppTheme.colors
 
     ScreenContainer {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val isLandscape = maxWidth > maxHeight
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header: volver + título + ruedita de opciones
+            // Header: volver + ruedita de opciones
             Box(modifier = Modifier.fillMaxWidth()) {
                 CircleIconButton(
                     icon = R.drawable.ic_arrow_back,
                     contentDescription = stringResource(R.string.btn_back_description),
                     onClick = onBack,
                     modifier = Modifier.align(Alignment.CenterStart)
-                )
-                Text(
-                    text = stringResource(R.string.main_menu_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontSize = 18.sp,
-                    color = colors.textPrimary,
-                    modifier = Modifier.align(Alignment.Center)
                 )
                 CircleIconButton(
                     icon = R.drawable.ic_settings,
@@ -66,57 +86,224 @@ fun MainMenuScreen(
                 )
             }
 
-            // Contenido central con los 3 enlaces principales
+            // Contenido central con los juegos y las opciones
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .then(if (isLandscape) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+                    .padding(top = 2.dp, bottom = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+                verticalArrangement = if (isLandscape) Arrangement.SpaceBetween else Arrangement.Top,
+            ) {
+                // Títulos superiores
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "Código Verde",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = colors.textHighlight,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(R.string.main_menu_subtitle),
+                        color = colors.textSecondary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // Tarjetas de los Dos Juegos (Juego 1 y Juego 2)
+                if (isLandscape) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        GameCardItem(
+                            title = "LUNCH TIME",
+                            description = "Armá tu menú saludable.",
+                            buttonText = "¡JUGAR! ▷",
+                            coverRes = R.drawable.portada,
+                            onPlayClick = onPlayGame1Click,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        GameCardItem(
+                            title = "GUERRA DE PLATILLOS",
+                            description = "Desafío Máximo",
+                            buttonText = "¡JUGAR! ▷",
+                            coverRes = R.drawable.img_guerra_de_platillos_cover,
+                            onPlayClick = onPlayGame2Click,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        GameCardItem(
+                            title = "LUNCH TIME",
+                            description = "Armá tu menú saludable.",
+                            buttonText = "¡JUGAR! ▷",
+                            coverRes = R.drawable.portada,
+                            onPlayClick = onPlayGame1Click
+                        )
+
+                        GameCardItem(
+                            title = "GUERRA DE PLATILLOS",
+                            description = "Desafío Máximo",
+                            buttonText = "¡JUGAR! ▷",
+                            coverRes = R.drawable.img_guerra_de_platillos_cover,
+                            onPlayClick = onPlayGame2Click
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // Botones inferiores de Perfil y Ranking
+                if (isLandscape) {
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        QrScanCircleButton(onClick = onScanCardClick)
+                        Spacer(Modifier.width(16.dp))
+                        SecondaryButton(
+                            text = stringResource(R.string.main_menu_profile),
+                            onClick = onProfileClick,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        SecondaryButton(
+                            text = stringResource(R.string.main_menu_ranking),
+                            onClick = onRankingClick,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                        )
+                    }
+                } else {
+                    Spacer(Modifier.weight(1f))
+                    Spacer(Modifier.height(12.dp))
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            QrScanCircleButton(
+                                onClick = onScanCardClick,
+                                modifier = Modifier.align(Alignment.CenterStart)
+                            )
+                        }
+
+                        SecondaryButton(
+                            text = stringResource(R.string.main_menu_profile),
+                            onClick = onProfileClick,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp)
+                        )
+
+                        SecondaryButton(
+                            text = stringResource(R.string.main_menu_ranking),
+                            onClick = onRankingClick,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp)
+                        )
+                    }
+                }
+            }
+        }
+        }
+    }
+}
+
+@Composable
+fun GameCardItem(
+    title: String,
+    description: String,
+    buttonText: String,
+    @DrawableRes coverRes: Int? = null,
+    modifier: Modifier = Modifier,
+    onPlayClick: () -> Unit
+) {
+    val cardBg = AppTheme.colors.cardBg
+    val accentGreen = AppTheme.colors.success
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(130.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(cardBg)
+            .border(1.dp, accentGreen, RoundedCornerShape(16.dp))
+            .padding(10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Imagen o recuadro de miniatura del juego
+            Box(
+                modifier = Modifier
+                    .size(85.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(AppTheme.colors.cardUnselectedBg)
+            ) {
+                if (coverRes != null) {
+                    Image(
+                        painter = painterResource(id = coverRes),
+                        contentDescription = title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Textos y botón de jugar individual
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(1f),
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = colors.textHighlight,
-                    textAlign = TextAlign.Center,
+                    text = title,
+                    color = accentGreen,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
                 )
-                Spacer(Modifier.height(6.dp))
                 Text(
-                    text = stringResource(R.string.main_menu_subtitle),
-                    color = colors.textSecondary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
+                    text = description,
+                    color = AppTheme.colors.textSecondary,
+                    fontSize = 11.sp
                 )
-
-                Spacer(Modifier.height(36.dp))
-
-                PrimaryButton(
-                    text = stringResource(R.string.main_menu_play),
+                Spacer(modifier = Modifier.height(4.dp))
+                Button(
                     onClick = onPlayClick,
-                    playSound = false,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                SecondaryButton(
-                    text = stringResource(R.string.main_menu_profile),
-                    onClick = onProfileClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp)
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                SecondaryButton(
-                    text = stringResource(R.string.main_menu_ranking),
-                    onClick = onRankingClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp)
-                )
+                    colors = ButtonDefaults.buttonColors(containerColor = accentGreen),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                    modifier = Modifier.height(30.dp)
+                ) {
+                    Text(
+                        text = buttonText,
+                        color = AppTheme.colors.buttonPrimaryText,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
+                    )
+                }
             }
         }
     }
@@ -127,11 +314,39 @@ fun MainMenuScreen(
 private fun MainMenuScreenPreview() {
     GuerraDePlatillosTheme {
         MainMenuScreen(
-            onPlayClick = {},
+            onPlayGame1Click = {},
+            onPlayGame2Click = {},
             onProfileClick = {},
             onRankingClick = {},
             onSettingsClick = {},
             onBack = {},
+        )
+    }
+}
+
+@Composable
+private fun QrScanCircleButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AppTheme.colors
+    Box(
+        modifier = modifier
+            .size(46.dp)
+            .clip(CircleShape)
+            .background(colors.warning)
+            .border(1.5.dp, colors.textPrimary.copy(alpha = 0.25f), CircleShape)
+            .clickable {
+                SoundManager.playBubbly()
+                onClick()
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_qr_code),
+            contentDescription = "Escanear carta",
+            tint = colors.buttonPrimaryText,
+            modifier = Modifier.size(24.dp),
         )
     }
 }

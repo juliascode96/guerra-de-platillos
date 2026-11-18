@@ -57,8 +57,8 @@
     <string name="profile_badge_2">🔍 Lector de etiquetas</string>
     <string name="profile_badge_3">🔥 - días activo</string>
     <string name="profile_stat_1">días sin ultraprocesados</string>
-    <string name="profile_stat_2">productos editados</string>
-    <string name="profile_stat_3">objetivos listos</string>
+    <string name="profile_stat_2">racha de juego (días)</string>
+    <string name="profile_stat_3">partidas ganadas</string>
     <string name="profile_tab_summary">Resumen</string>
     <string name="profile_tab_log">Registro</string>
     <string name="profile_tab_achievements">Logros</string>

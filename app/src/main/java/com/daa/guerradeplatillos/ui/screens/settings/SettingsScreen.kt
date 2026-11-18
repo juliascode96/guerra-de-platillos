@@ -1,5 +1,8 @@
 package com.daa.guerradeplatillos.ui.screens.settings
 
+import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,15 +12,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.daa.guerradeplatillos.R
+import com.daa.guerradeplatillos.model.AvatarCatalog
 import com.daa.guerradeplatillos.ui.components.AppCard
 import com.daa.guerradeplatillos.ui.components.AppDivider
 import com.daa.guerradeplatillos.ui.components.CircleIconButton
@@ -38,24 +51,41 @@ import com.daa.guerradeplatillos.ui.theme.GuerraDePlatillosTheme
 import com.daa.guerradeplatillos.util.SoundManager
 import com.daa.guerradeplatillos.viewmodel.SettingsViewModel
 
-/** Pantalla de Configuración (equivalente a menuSettings de Código Verde). */
+/** Pantalla de Configuración / Opciones (equivalente a menuSettings de Código Verde). */
 @Composable
 fun SettingsScreen(
     onClose: () -> Unit,
     onProfileClick: () -> Unit,
+    onLogoutSuccess: () -> Unit = {},
     viewModel: SettingsViewModel = viewModel(),
 ) {
+    val context = LocalContext.current
     val palette by viewModel.palette.collectAsStateWithLifecycle()
     val soundEnabled by viewModel.soundEnabled.collectAsStateWithLifecycle()
+    val currentUserUid by viewModel.currentUserUid.collectAsStateWithLifecycle()
+    val avatar by viewModel.avatar.collectAsStateWithLifecycle()
+    val apodoRemoto by viewModel.apodoRemoto.collectAsStateWithLifecycle()
+
+    val nombreActual = avatar?.nombre?.takeIf { it.isNotBlank() }
+        ?: apodoRemoto.takeIf { it.isNotBlank() }
 
     SettingsContent(
         palette = palette,
         soundEnabled = soundEnabled,
+        isLoggedIn = currentUserUid != null,
+        userDisplayName = nombreActual,
+        avatarDrawableRes = avatar?.let { AvatarCatalog.byId(it.avatarId)?.drawable },
         onClose = onClose,
         onProfileClick = onProfileClick,
         onSoundChange = viewModel::setSoundEnabled,
         onProtanopiaChange = viewModel::setProtanopia,
         onTritanopiaChange = viewModel::setTritanopia,
+        onLogoutClick = {
+            SoundManager.playBubbly()
+            viewModel.cerrarSesion()
+            Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+            onLogoutSuccess()
+        }
     )
 }
 
@@ -63,11 +93,15 @@ fun SettingsScreen(
 private fun SettingsContent(
     palette: ColorPalette,
     soundEnabled: Boolean,
+    isLoggedIn: Boolean,
+    userDisplayName: String?,
+    avatarDrawableRes: Int? = null,
     onClose: () -> Unit,
     onProfileClick: () -> Unit,
     onSoundChange: (Boolean) -> Unit,
     onProtanopiaChange: (Boolean) -> Unit,
     onTritanopiaChange: (Boolean) -> Unit,
+    onLogoutClick: () -> Unit,
 ) {
     val colors = AppTheme.colors
 
@@ -101,17 +135,33 @@ private fun SettingsContent(
                     .padding(top = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                CircleIconButton(
-                    icon = R.drawable.ic_person,
-                    contentDescription = stringResource(R.string.settings_profile_description),
-                    onClick = onProfileClick,
-                    size = 80.dp,
-                    tint = colors.success,
-                )
+                if (avatarDrawableRes != null) {
+                    Image(
+                        painter = painterResource(avatarDrawableRes),
+                        contentDescription = stringResource(R.string.settings_profile_description),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, colors.success, CircleShape)
+                            .clickable {
+                                SoundManager.playBubbly()
+                                onProfileClick()
+                            }
+                    )
+                } else {
+                    CircleIconButton(
+                        icon = R.drawable.ic_person,
+                        contentDescription = stringResource(R.string.settings_profile_description),
+                        onClick = onProfileClick,
+                        size = 80.dp,
+                        tint = colors.success,
+                    )
+                }
                 Text(
-                    text = stringResource(R.string.settings_my_profile),
-                    color = colors.textSecondary,
-                    fontSize = 13.sp,
+                    text = userDisplayName ?: stringResource(R.string.settings_my_profile),
+                    color = colors.textPrimary,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .padding(top = 6.dp)
@@ -120,6 +170,19 @@ private fun SettingsContent(
                             onProfileClick()
                         }
                 )
+                if (userDisplayName != null) {
+                    Text(
+                        text = stringResource(R.string.settings_my_profile),
+                        color = colors.textSecondary,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .padding(top = 2.dp)
+                            .clickable {
+                                SoundManager.playBubbly()
+                                onProfileClick()
+                            }
+                    )
+                }
             }
 
             // SECCIÓN 1: SONIDO
@@ -161,6 +224,29 @@ private fun SettingsContent(
                     )
                 }
             }
+
+            // SECCIÓN 3: CUENTA Y SESIÓN
+            if (isLoggedIn) {
+                Spacer(Modifier.height(28.dp))
+                Button(
+                    onClick = onLogoutClick,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.error,
+                        contentColor = colors.textPrimary,
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = "Cerrar sesión",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                    )
+                }
+            }
+
             Spacer(Modifier.height(16.dp))
         }
     }
@@ -173,8 +259,11 @@ private fun SettingsPreview() {
         SettingsContent(
             palette = ColorPalette.NORMAL,
             soundEnabled = true,
+            isLoggedIn = true,
+            userDisplayName = "Mateo",
             onClose = {}, onProfileClick = {},
             onSoundChange = {}, onProtanopiaChange = {}, onTritanopiaChange = {},
+            onLogoutClick = {},
         )
     }
 }
