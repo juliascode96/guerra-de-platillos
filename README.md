@@ -390,7 +390,7 @@ La base de datos local `AppDatabase` (`codigo_verde.db`, versión 2 con `MIGRATI
 
 | Integrante | Rol en el equipo | Tareas realizadas |
 | :--- | :--- | :--- |
-| **Betancor Fernando** | Base de datos | Implementación de base de datos SQLite mediante la librería Room, para persistencia y guardado de partidas de manera offline y automática |
+| **Betancor Fernando** | Lógica de juego y base de datos | Implementación de la estructura lógica de los juegos y construcción de base de datos SQLite mediante la librería Room, para persistencia y guardado de partidas de manera offline y automática |
 | **Rey Lucas** | Supervisión, manejo de sensores y cámara | Implementación de funcionalidad de sensores para gestos de agitado y de escaneo de códigos QR utilizando la cámara del teléfono. |
 | **Rodríguez Stephany** | Diseño UX/UI, Arquitectura Front-end | Conceptualización y diseño de la interfaz en Figma, Desarrollo de la maquetación y pantallas clave en Kotlin(Menú principal, pantalla de inicio de Guerra de platillos, pantallas de duelo), modificación y creación de cartas. |
 | **Scodelari Julia** | Programación y documentación | Armado del readme.md, implementación del patrón MVVM, generación de assets (imágenes, sonidos, animaciones), implementación de base de datos en firestore y conexión desde la app. Armado de la lógica del perfil de usuario. |
