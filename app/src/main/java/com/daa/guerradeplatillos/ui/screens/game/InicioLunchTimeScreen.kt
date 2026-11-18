@@ -17,7 +17,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import com.daa.guerradeplatillos.ui.components.HowToPlayDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +49,15 @@ fun InicioLunchTimeScreen(
     onSettingsClick: () -> Unit = {},
 ) {
     val colors = AppTheme.colors
+    var showHowTo by rememberSaveable { mutableStateOf(false) }
+
+    if (showHowTo) {
+        HowToPlayDialog(
+            gameTitle = "Lunch Time!",
+            slides = lunchTimeHowToSlides,
+            onDismiss = { showHowTo = false },
+        )
+    }
 
     ScreenContainer {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -66,12 +81,22 @@ fun InicioLunchTimeScreen(
                         onClick = onBack,
                         modifier = Modifier.align(Alignment.CenterStart)
                     )
-                    CircleIconButton(
-                        icon = R.drawable.ic_settings,
-                        contentDescription = stringResource(R.string.btn_settings_description),
-                        onClick = onSettingsClick,
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    )
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CircleIconButton(
+                            icon = R.drawable.ic_help,
+                            contentDescription = "Cómo jugar",
+                            onClick = { showHowTo = true },
+                            tint = colors.textHighlight
+                        )
+                        CircleIconButton(
+                            icon = R.drawable.ic_settings,
+                            contentDescription = stringResource(R.string.btn_settings_description),
+                            onClick = onSettingsClick
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
